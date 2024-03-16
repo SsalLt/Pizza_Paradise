@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Вход</h2>
+    <p style="color: red;">{{ error_message }}</p>
+    <form action="/login" method="post">
+        <input type="text" name="username" placeholder="Имя пользователя" required><br>
+        <input type="password" name="password" placeholder="Пароль" required><br>
+        <input type="submit" value="Войти">
+    </form>
+{% endblock %}
+{% block login_reg_buttons %}
+    <a href="/login">Войти</a>
+    <a href="/register">Зарегистрироваться</a>
+{% endblock %}

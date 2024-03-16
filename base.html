@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}PizzaParadise{% endblock %}</title>
+    <style>
+        header {
+            background-color: #f1f1f1;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: space-around;
+        }
+        nav a {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        nav a:hover {
+            background-color: #3e8e41;
+        }
+
+    </style>
+</head>
+<body>
+<header>
+    <h1>PizzaParadise</h1>
+    <nav>
+        <a href="{{ url_for('menu') }}">Меню</a>
+        <a href="{{ url_for('about') }}">О нас</a>
+        <a href="{{ url_for('reviews') }}">Отзывы</a>
+        <a href="{{ url_for('cart') }}">Корзина</a>
+        {% if user_id %}
+        <a href="{{ url_for('logout') }}">Выйти</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">Войти</a>
+        <a href="{{ url_for('register') }}">Регистрация</a>
+        {% endif %}
+    </nav>
+</header>
+<main>
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

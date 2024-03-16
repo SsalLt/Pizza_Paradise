@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина - PizzaParadise{% endblock %}
+
+{% block content %}
+{% if user_id is none %}
+<h2 style="color: red;">Ошибка: Для просмотра корзины необходимо выполнить вход.</h2>
+{% else %}
+{% if cart_items %}
+{% for item in cart_items %}
+<div style="border: 1px solid black; padding: 10px; margin: 10px;">
+    <h3>{{ item.name }}</h3>
+    <p>Количество: {{ item.quantity }}</p>
+    <p>Стоимость: {{ item.price * item.quantity }} руб.</p>
+</div>
+{% endfor %}
+<h2>Стоимость: {{ total_price }} руб.</h2>
+{% else %}
+<h2>Корзина пуста</h2>
+{% endif %}
+{% endif %}
+{% endblock %}
