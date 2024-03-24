@@ -104,7 +104,8 @@ def cart():
 def add_to_cart():
     user_id = get_user_id()
     if user_id is None:
-        return "Ошибка: Для добавления пиццы в корзину необходимо выполнить вход.", 401
+        error_message = 'Ошибка: Для добавление в корзину необходимо выполнить вход.'
+        return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     name = request.form.get("name")
     price = int(request.form.get("price"))
     conn = sqlite3.connect('pizzaparadise.db')
