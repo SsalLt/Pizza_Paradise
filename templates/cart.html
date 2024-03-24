@@ -4,7 +4,7 @@
 
 {% block content %}
 {% if user_id is none %}
-<h2 style="color: red;">Ошибка: Для просмотра корзины необходимо выполнить вход.</h2>
+<h2 style="color: red;">{{ error_message }}</h2>
 {% else %}
 {% if cart_items %}
 {% for item in cart_items %}
