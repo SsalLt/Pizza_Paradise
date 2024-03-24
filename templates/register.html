@@ -1,14 +1,13 @@
 {% extends "base.html" %}
+
+{% block title %}Регистрация - PizzaParadise{% endblock %}
+
 {% block content %}
-<h2>Регистрация</h2>
-<p style="color: red;">{{ error_message }}</p>
-<form action="/register" method="post">
-    <input type="text" name="username" placeholder="Имя пользователя" required><br>
+<h2 class="registration-heading">Регистрация</h2>
+<p class="error-message">{{ error_message }}</p>
+<form action="/register" method="post" class="register-form">
+    <input type="email" name="username" placeholder="Имя пользователя" required><br>
     <input type="password" name="password" placeholder="Пароль" required><br>
     <input type="submit" value="Зарегистрироваться">
 </form>
-{% endblock %}
-{% block login_reg_buttons %}
-<a href="/login">Войти</a>
-<a href="/register">Зарегистрироваться</a>
 {% endblock %}

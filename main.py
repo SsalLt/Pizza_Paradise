@@ -1,8 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pizzaparadise.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_secret_key'
+db = SQLAlchemy(app)
+
+app.config['MAIL_SERVER'] = 'smtp.example.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your-email@example.com'
+app.config['MAIL_PASSWORD'] = 'your-email-password'
+mail = Mail(app)
+
 MENU = [
     {"name": "Пицца Маргарита", "price": 350, "weight": "300г"},
     {"name": "Пицца Пепперони", "price": 450, "weight": "400г"},
@@ -10,24 +22,35 @@ MENU = [
 ]
 
 
-def init_db():
-    conn = sqlite3.connect('pizzaparadise.db')
-    cursor = conn.cursor()
-    cursor.execute(
-        '''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, 
-        password TEXT)''')
-    cursor.execute(
-        '''CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, author TEXT, 
-        rating INTEGER, comment TEXT, FOREIGN KEY(user_id) REFERENCES users(id))''')
-    cursor.execute(
-        '''CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pizza_name TEXT, 
-        quantity INTEGER, FOREIGN KEY(user_id) REFERENCES users(id))''')
-    conn.commit()
-    conn.close()
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    reviews = db.relationship('Review', backref='user', lazy=True)
+    cart_items = db.relationship('CartItem', backref='user', lazy=True)
 
 
-init_db()
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=False)
 
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pizza_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+
+def get_login_reg_buttons(user_id):
+    return render_template('login_reg_buttons.html', user_id=user_id)
+
+
+def get_user_id():
+    return session.get('user_id')
 
 @app.route('/')
 def index():
@@ -49,15 +72,11 @@ def about():
 
 @app.route('/reviews')
 def reviews():
-    conn = sqlite3.connect('pizzaparadise.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT reviews.*, users.username FROM reviews JOIN users ON reviews.user_id = users.id')
-    reviews_data = cursor.fetchall()
+    reviews_data = Review.query.join(User).add_columns(Review.id, User.username, Review.author, Review.rating,
+                                                       Review.comment).all()
     user_id = get_user_id()
-    review_exists = False
-    if user_id is not None:
-        review_exists = cursor.execute('SELECT * FROM reviews WHERE user_id = ?', (user_id,)).fetchone() is not None
-    conn.close()
+    review_exists = Review.query.filter_by(user_id=user_id).first() is not None if user_id is not None else False
+    print(reviews_data)
     return render_template('reviews.html', reviews_data=reviews_data, user_id=user_id, review_exists=review_exists,
                            none=None)
 
@@ -70,12 +89,9 @@ def add_review():
     author = request.form.get("author")
     rating = int(request.form.get("rating"))
     comment = request.form.get("comment")
-    conn = sqlite3.connect('pizzaparadise.db')
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO reviews (user_id, author, rating, comment) VALUES (?, ?, ?, ?)',
-                   (user_id, author, rating, comment))
-    conn.commit()
-    conn.close()
+    review = Review(user_id=user_id, author=author, rating=rating, comment=comment)
+    db.session.add(review)
+    db.session.commit()
     return redirect(url_for('reviews'))
 
 
@@ -87,16 +103,12 @@ def cart():
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     cart_items = []
     total_price = 0
-    conn = sqlite3.connect('pizzaparadise.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM cart WHERE user_id = ?', (user_id,))
-    cart_data = cursor.fetchall()
+    cart_data = CartItem.query.filter_by(user_id=user_id).all()
     for item in cart_data:
-        pizza = next((p for p in MENU if p["name"] == item[2]), None)
+        pizza = next((p for p in MENU if p["name"] == item.pizza_name), None)
         if pizza:
-            cart_items.append({"name": pizza["name"], "price": pizza["price"], "quantity": item[3]})
-            total_price += pizza["price"] * item[3]
-    conn.close()
+            cart_items.append({"name": pizza["name"], "price": pizza["price"], "quantity": item.quantity})
+            total_price += pizza["price"] * item.quantity
     return render_template('cart.html', user_id=user_id, cart_items=cart_items, total_price=total_price)
 
 
@@ -107,26 +119,14 @@ def add_to_cart():
         error_message = 'Ошибка: Для добавление в корзину необходимо выполнить вход.'
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     name = request.form.get("name")
-    price = int(request.form.get("price"))
-    conn = sqlite3.connect('pizzaparadise.db')
-    cursor = conn.cursor()
-    existing_item = cursor.execute('SELECT * FROM cart WHERE user_id = ? AND pizza_name = ?',
-                                   (user_id, name)).fetchone()
+    existing_item = CartItem.query.filter_by(user_id=user_id, pizza_name=name).first()
     if existing_item:
-        cursor.execute('UPDATE cart SET quantity = quantity + 1 WHERE user_id = ? AND pizza_name = ?', (user_id, name))
+        existing_item.quantity += 1
     else:
-        cursor.execute('INSERT INTO cart (user_id, pizza_name, quantity) VALUES (?, ?, ?)', (user_id, name, 1))
-    conn.commit()
-    conn.close()
+        cart_item = CartItem(user_id=user_id, pizza_name=name, quantity=1)
+        db.session.add(cart_item)
+    db.session.commit()
     return redirect("/cart")
-
-
-def get_login_reg_buttons(user_id):
-    return render_template('login_reg_buttons.html', user_id=user_id)
-
-
-def get_user_id():
-    return session.get('user_id')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -135,13 +135,10 @@ def login():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
-        conn = sqlite3.connect('pizzaparadise.db')
-        cursor = conn.cursor()
-        user = cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?',
-                              (username, password)).fetchone()
-        conn.close()
+        user = User.query.filter_by(username=username, password=password).first()
+        print(user)
         if user is not None:
-            session['user_id'] = user[0]  # Устанавливаем user_id в сессии
+            session['user_id'] = user.id
             return redirect(url_for('menu'))
         else:
             error_message = 'Неверный логин или пароль.'
@@ -154,18 +151,14 @@ def register():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
-        conn = sqlite3.connect('pizzaparadise.db')
-        cursor = conn.cursor()
-        existing_user = cursor.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
-        conn.close()
+        existing_user = User.query.filter_by(username=username).first()
         if existing_user is not None:
             error_message = 'Такой логин уже используется.'
         else:
-            conn = sqlite3.connect('pizzaparadise.db')
-            cursor = conn.cursor()
-            cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
-            conn.commit()
-            conn.close()
+            new_user = User(username=username, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            session['user_id'] = new_user.id  # Устанавливаем user_id в сессии
             return redirect(url_for('login'))
     return render_template('register.html', error_message=error_message)
 
@@ -177,4 +170,6 @@ def logout():
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)

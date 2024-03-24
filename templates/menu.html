@@ -3,15 +3,14 @@
 {% block title %}Меню - PizzaParadise{% endblock %}
 
 {% block content %}
-
 {% for pizza in MENU %}
-<div style="border: 1px solid black; padding: 10px; margin: 10px;">
+<div class="pizza-item">
     <h3>{{ pizza.name }}</h3>
     <p>{{ pizza.weight }} - {{ pizza.price }} руб.</p>
     <form action="{{ url_for('add_to_cart') }}" method="post">
         <input type="hidden" name="name" value="{{ pizza.name }}">
         <input type="hidden" name="price" value="{{ pizza.price }}">
-        <input type="submit" value="Добавить в корзину" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; border-radius: 4px;">
+        <input type="submit" value="Добавить в корзину">
     </form>
 </div>
 {% endfor %}
