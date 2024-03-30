@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Оплата - PizzaParadise{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Оплата заказа</h2>
+    <form action="/process_payment" method="post">
+        <!-- Форма для ввода данных о карте -->
+        <div class="form-group">
+            <label for="card_number">Номер карты</label>
+            <input type="text" class="form-control" id="card_number" name="card_number" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="exp_month">Срок действия (ММ)</label>
+                <input type="text" class="form-control" id="exp_month" name="exp_month" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="exp_year">Срок действия (ГГГГ)</label>
+                <input type="text" class="form-control" id="exp_year" name="exp_year" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cvc">CVC</label>
+            <input type="text" class="form-control" id="cvc" name="cvc" required>
+        </div>
+
+        <!-- Скрытое поле с общей суммой для оплаты -->
+        <input type="hidden" name="total_price" value="{{ total_price }}">
+
+        <!-- Кнопка для отправки формы -->
+        <button type="submit" class="btn btn-primary">Оплатить {{ total_price }} руб.</button>
+    </form>
+
+</div>
+{% endblock %}

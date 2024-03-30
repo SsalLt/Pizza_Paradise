@@ -33,7 +33,18 @@ nav a:hover {
     text-align: center; /* Центрирование текста */
     font-size: 40px;
 }
-
+/* Success Message Styles */
+.success-message {
+    color: green;
+    text-align: center; /* Центрирование текста */
+    font-size: 40px;
+}
+/* Pay form Styles */
+.pay-form {
+    color: black;
+    text-align: center; /* Центрирование текста */
+    font-size: 40px;
+}
 /* Cart Item Styles */
 .cart-item {
     border: 1px solid black;
@@ -175,7 +186,7 @@ nav a:hover {
 .review-form {
     margin-top: 20px;
     font-size: 20px; /* Font size set to 20px */
-    margin-left: 20%; /* Centering horizontally */
+    margin-left: 10%; /* Centering horizontally */
     margin-right: 20%;
 }
 

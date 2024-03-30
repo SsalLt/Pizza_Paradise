@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import stripe
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
@@ -14,12 +17,12 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'your-email@example.com'
 app.config['MAIL_PASSWORD'] = 'your-email-password'
 mail = Mail(app)
-
 MENU = [
     {"name": "Пицца Маргарита", "price": 350, "weight": "300г"},
     {"name": "Пицца Пепперони", "price": 450, "weight": "400г"},
     {"name": "Пицца 4 сыра", "price": 500, "weight": "450г"},
 ]
+total_price = 0
 
 
 class User(db.Model):
@@ -51,6 +54,7 @@ def get_login_reg_buttons(user_id):
 
 def get_user_id():
     return session.get('user_id')
+
 
 @app.route('/')
 def index():
@@ -97,6 +101,7 @@ def add_review():
 
 @app.route('/cart')
 def cart():
+    global total_price
     user_id = get_user_id()
     if user_id is None:
         error_message = 'Ошибка: Для просмотра корзины необходимо выполнить вход.'
@@ -110,6 +115,60 @@ def cart():
             cart_items.append({"name": pizza["name"], "price": pizza["price"], "quantity": item.quantity})
             total_price += pizza["price"] * item.quantity
     return render_template('cart.html', user_id=user_id, cart_items=cart_items, total_price=total_price)
+
+
+# Обработчик для страницы оплаты
+
+
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    user_id = get_user_id()
+    if user_id is None:
+        error_message = 'Ошибка: Для просмотра статуса необходимо выполнить вход.'
+        return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
+    if request.method == 'POST':
+        # Получаем данные о платеже из формы
+        card_number = request.form.get("card_number")
+        exp_month = request.form.get("exp_month")
+        exp_year = request.form.get("exp_year")
+        cvc = request.form.get("cvc")
+        total_price = request.form.get("total_price")
+        if len(card_number) != 16 or not card_number.isdigit():
+            error_message = 'Ошибка: Неверный номер карты.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+
+        if not (1 <= int(exp_month) <= 12):
+            error_message = 'Ошибка: Неверный месяц окончания срока действия карты.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+
+        current_year = datetime.now().year
+        if int(exp_year) < current_year or int(exp_year) > current_year + 10:
+            error_message = 'Ошибка: Неверный год окончания срока действия карты.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+
+        if len(cvc) != 3 or not cvc.isdigit():
+            error_message = 'Ошибка: Неверный CVV/CVC.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+        CartItem.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+
+        return render_template('payment_success.html', user_id=user_id, total_price=total_price)
+
+    return "Ошибка: Неверный метод запроса"
+
+
+@app.route('/payment', methods=['GET', 'POST'])
+def payment():
+    global total_price
+    user_id = get_user_id()
+    if user_id is None:
+        error_message = 'Ошибка: Для оплаты необходимо выполнить вход.'
+        return render_template('payment.html', user_id=user_id, error_message=error_message, none=None)
+
+    if request.method == 'POST':
+        return render_template('payment.html', user_id=user_id, total_price=total_price)
+
+    return render_template('payment.html', total_price=total_price, user_id=user_id)
 
 
 @app.route('/add_to_cart', methods=['POST'])
@@ -126,7 +185,7 @@ def add_to_cart():
         cart_item = CartItem(user_id=user_id, pizza_name=name, quantity=1)
         db.session.add(cart_item)
     db.session.commit()
-    return redirect("/cart")
+    return redirect("/menu")
 
 
 @app.route('/login', methods=['GET', 'POST'])
