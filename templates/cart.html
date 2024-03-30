@@ -14,12 +14,13 @@
                 <p>Стоимость: {{ item.price * item.quantity }} руб.</p>
             </div>
         {% endfor %}
-        <h2>Стоимость: {{ total_price }} руб.</h2>
-        <form action="/payment" method="post"> <!-- Форма для кнопки оплатить -->
-            <input type="submit" value="Оплатить">
+        <h2>Итого: {{ total_price }} руб.</h2>
+        <form action="/payment" method="post">
+            <input type="hidden" name="total_price" value="{{ total_price }}">
+            <button type="submit" class="btn btn-primary">Оплатить.</button>
         </form>
     {% else %}
-        <h2>Корзина пуста</h2>
+        <h2 class="success-message">Корзина пуста</h2>
     {% endif %}
 {% endif %}
 {% endblock %}
