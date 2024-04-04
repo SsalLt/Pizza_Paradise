@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import stripe
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
@@ -23,6 +22,7 @@ MENU = [
     {"name": "Пицца 4 сыра", "price": 500, "weight": "450г"},
 ]
 total_price = 0
+cart_items = []
 
 
 class User(db.Model):
@@ -56,6 +56,11 @@ def get_user_id():
     return session.get('user_id')
 
 
+def get_email(user_id):
+    user = User.query.get(user_id)
+    return user.username
+
+
 @app.route('/')
 def index():
     user_id = get_user_id()
@@ -65,6 +70,7 @@ def index():
 @app.route('/menu')
 def menu():
     user_id = get_user_id()
+    print(get_email(user_id))
     return render_template('menu.html', MENU=MENU, user_id=user_id)
 
 
@@ -102,6 +108,7 @@ def add_review():
 @app.route('/cart')
 def cart():
     global total_price
+    global cart_items
     user_id = get_user_id()
     if user_id is None:
         error_message = 'Ошибка: Для просмотра корзины необходимо выполнить вход.'
@@ -122,17 +129,20 @@ def cart():
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
+    global total_price
     user_id = get_user_id()
     if user_id is None:
         error_message = 'Ошибка: Для просмотра статуса необходимо выполнить вход.'
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     if request.method == 'POST':
-        # Получаем данные о платеже из формы
         card_number = request.form.get("card_number")
-        exp_month = request.form.get("exp_month")
-        exp_year = request.form.get("exp_year")
+        if request.form.get("expiry_date").split('/'):
+            exp_month, exp_year = request.form.get("expiry_date").split('/')
+        else:
+            error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+
         cvc = request.form.get("cvc")
-        total_price = request.form.get("total_price")
         if len(card_number) != 16 or not card_number.isdigit():
             error_message = 'Ошибка: Неверный номер карты.'
             return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
@@ -142,7 +152,7 @@ def process_payment():
             return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
         current_year = datetime.now().year
-        if int(exp_year) < current_year or int(exp_year) > current_year + 10:
+        if current_year <= int(exp_year) <= current_year + 10:
             error_message = 'Ошибка: Неверный год окончания срока действия карты.'
             return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
@@ -160,15 +170,18 @@ def process_payment():
 @app.route('/payment', methods=['GET', 'POST'])
 def payment():
     global total_price
+    global cart_items
     user_id = get_user_id()
+    discount = 20
     if user_id is None:
         error_message = 'Ошибка: Для оплаты необходимо выполнить вход.'
-        return render_template('payment.html', user_id=user_id, error_message=error_message, none=None)
+        return render_template('testpayment.html', user_id=user_id, error_message=error_message, none=None)
 
     if request.method == 'POST':
-        return render_template('payment.html', user_id=user_id, total_price=total_price)
+        return render_template('testpayment.html', user_id=user_id, total_price=total_price, cart_items=[cart_items],
+                               discount=discount)
 
-    return render_template('payment.html', total_price=total_price, user_id=user_id)
+    return render_template('testpayment.html', total_price=total_price, user_id=user_id)
 
 
 @app.route('/add_to_cart', methods=['POST'])
