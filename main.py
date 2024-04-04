@@ -10,11 +10,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_secret_key'
 db = SQLAlchemy(app)
 
-app.config['MAIL_SERVER'] = 'smtp.example.com'
+app.config['MAIL_SERVER'] = 'smtp.yandex.ru'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@example.com'
-app.config['MAIL_PASSWORD'] = 'your-email-password'
+app.config['MAIL_USERNAME'] = 'pizzaparadise.staff@yandex.ru'
+app.config['MAIL_PASSWORD'] = 'wwigfvvgjboxmfvt'
 mail = Mail(app)
 MENU = [
     {"name": "Пицца Маргарита", "price": 350, "weight": "300г"},
@@ -70,7 +70,7 @@ def index():
 @app.route('/menu')
 def menu():
     user_id = get_user_id()
-    print(get_email(user_id))
+    session['payment_confirmation_sent'] = False
     return render_template('menu.html', MENU=MENU, user_id=user_id)
 
 
@@ -162,9 +162,32 @@ def process_payment():
         CartItem.query.filter_by(user_id=user_id).delete()
         db.session.commit()
 
-        return render_template('payment_success.html', user_id=user_id, total_price=total_price)
+        return redirect('/payment_success')
 
     return "Ошибка: Неверный метод запроса"
+
+
+@app.route('/payment_success', methods=['GET', 'POST'])
+def payment_success():
+    print(session)
+    global total_price
+    user_id = get_user_id()
+    user = User.query.get(user_id)
+    if not session['payment_confirmation_sent'] and user:
+        send_payment_confirmation_email(user.username, total_price)
+        session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
+    return render_template('payment_success.html', user_id=user_id, total_price=total_price)
+
+
+def send_payment_confirmation_email(recipient_email, price):
+    subject = "Подтверждение покупки"
+    body = f"Уважаемый пользователь, ваша покупка в размере {price} рублей успешно обработана. Спасибо за ваш заказ!"
+    msg = Message(subject, sender='pizzaparadise.staff@yandex.ru', recipients=[recipient_email])
+    msg.body = body
+    # Вложение изображения
+    # with app.open_resource("path/to/your/image.jpg") as fp:
+    #     msg.attach("image.jpg", "image/jpg", fp.read())
+    mail.send(msg)
 
 
 @app.route('/payment', methods=['GET', 'POST'])
