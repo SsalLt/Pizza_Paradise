@@ -2,4 +2,14 @@
 {% block title %}Успешная оплата - PizzaParadise{% endblock %}
 {% block content %}
 <h2 class="success-message">Оплата заказа в размере {{ total_price }} руб. успешно выполнена.</h2>
+
+<script>
+    // Проверяем, была ли страница перезагружена
+    if (performance.navigation.type === 1) {
+        // Если страница была перезагружена, перенаправляем пользователя на страницу меню
+        window.location.href = '{{ url_for("menu") }}';
+    }
+
+</script>
+
 {% endblock %}

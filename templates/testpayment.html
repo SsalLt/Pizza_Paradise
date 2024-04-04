@@ -39,7 +39,8 @@
                                             <div class="d-flex align-items-center justify-content-between">
 
                                                 <span>Paypal</span>
-                                                <img src="https://play-lh.googleusercontent.com/bDCkDV64ZPT38q44KBEWgicFt2gDHdYPgCHbA3knlieeYpNqbliEqBI90Wr6Tu8YOw=w240-h480-rw" width="30">
+                                                <img src="https://play-lh.googleusercontent.com/bDCkDV64ZPT38q44KBEWgicFt2gDHdYPgCHbA3knlieeYpNqbliEqBI90Wr6Tu8YOw=w240-h480-rw"
+                                                     width="30">
 
                                             </div>
                                         </button>
@@ -63,9 +64,12 @@
 
                                                 <span>Карта</span>
                                                 <div class="icons">
-                                                    <img src="https://invest-brands.cdn-tinkoff.ru/US92826C8394x640.png" width="30">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGZNcjYwYO5hpYJVKUGYu_TW5KwSej-X60-KntYYX80A&s" width="30">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqPcx-LTSh0STAA14f8yfkztc1MhivXdc7yWaZPaR1zg&s" width="30">
+                                                    <img src="https://invest-brands.cdn-tinkoff.ru/US92826C8394x640.png"
+                                                         width="30">
+                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGZNcjYwYO5hpYJVKUGYu_TW5KwSej-X60-KntYYX80A&s"
+                                                         width="30">
+                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqPcx-LTSh0STAA14f8yfkztc1MhivXdc7yWaZPaR1zg&s"
+                                                         width="30">
                                                 </div>
 
                                             </div>
@@ -75,13 +79,14 @@
 
                                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne"
                                      data-parent="#accordionExample">
-                                   <div class="card-body payment-card-body">
+                                    <div class="card-body payment-card-body">
 
                                         <span class="font-weight-normal card-text">Card Number</span>
                                         <div class="input">
 
                                             <i class="fa fa-credit-card"></i>
-                                            <input type="text" name="card_number" class="form-control" placeholder="0000 0000 0000 0000">
+                                            <input type="text" name="card_number" class="form-control"
+                                                   placeholder="0000 0000 0000 0000">
 
                                         </div>
 
@@ -93,7 +98,8 @@
                                                 <div class="input">
 
                                                     <i class="fa fa-calendar"></i>
-                                                    <input type="text" name="expiry_date" class="form-control" placeholder="MM/YY">
+                                                    <input type="text" name="expiry_date" class="form-control"
+                                                           placeholder="MM/YY">
 
                                                 </div>
 
@@ -105,7 +111,8 @@
                                                 <div class="input">
 
                                                     <i class="fa fa-lock"></i>
-                                                    <input type="text" name="cvc" class="form-control" placeholder="000">
+                                                    <input type="text" name="cvc" class="form-control"
+                                                           placeholder="000">
 
                                                 </div>
 
@@ -131,13 +138,12 @@
                     <div class="card">
 
                         <div class="d-flex justify-content-between p-3">
-                                {% for item in cart_items.0 %}
-                                    <div class="d-flex flex-column mb-3">
-                                        <span>{{ item.name }}</span>
-                                        <span>{{ item.quantity }}</span>
-                                    </div>
-                                {% endfor %}
-
+                            {% for item in cart_items.0 %}
+                            <div class="d-flex flex-column mb-3">
+                                <span>{{ item.name }}</span>
+                                <span>{{ item.quantity }}</span>
+                            </div>
+                            {% endfor %}
 
 
                             <div class="mt-1">
@@ -160,14 +166,12 @@
 
                                 <span>Бонусы и скидки</span>
                                 {% if discount %}
-                                    <span>{{ total_price*(discount/100) }}</span>
+                                <span>{{ total_price*(discount/100) }}</span>
                                 {% else %}
-                                    <span>{{ discount }}</span>
+                                <span>{{ discount }}</span>
                                 {% endif %}
 
                             </div>
-
-
 
 
                         </div>
