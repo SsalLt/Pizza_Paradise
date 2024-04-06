@@ -8,7 +8,8 @@
 
 {% block content %}
 <!-- Bootstrap CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-alpha1/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-alpha1/dist/css/bootstrap.min.css"
+      xmlns="http://www.w3.org/1999/html">
 <!-- Font Awesome CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <!-- jQuery -->
@@ -19,29 +20,24 @@
 <form action="/process_payment" method="post">
     <div class="container d-flex justify-content-center mt-5 mb-5">
         <div class="container d-flex justify-content-center mt-5 mb-5">
-
-
             <div class="row g-3">
-
                 <div class="col-md-6">
-
                     <span>Payment Method</span>
                     <div class="card">
 
                         <div class="accordion" id="accordionExample">
-
                             <div class="card">
                                 <div class="card-header p-0" id="headingTwo">
                                     <h2 class="mb-0">
-                                        <button class="btn btn-light btn-block text-left collapsed p-3 rounded-0 border-bottom-custom"
-                                                type="button" data-toggle="collapse" data-target="#collapseTwo"
+                                        <button type="button"
+                                                class="btn btn-light btn-block text-left collapsed p-3 rounded-0 border-bottom-custom"
+                                                data-toggle="collapse" data-target="#collapseTwo"
                                                 aria-expanded="false" aria-controls="collapseTwo">
                                             <div class="d-flex align-items-center justify-content-between">
 
                                                 <span>Paypal</span>
                                                 <img src="https://play-lh.googleusercontent.com/bDCkDV64ZPT38q44KBEWgicFt2gDHdYPgCHbA3knlieeYpNqbliEqBI90Wr6Tu8YOw=w240-h480-rw"
                                                      width="30">
-
                                             </div>
                                         </button>
                                     </h2>
@@ -49,19 +45,18 @@
                                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
                                      data-parent="#accordionExample">
                                     <div class="card-body">
-                                        <input type="text" class="form-control" placeholder="Paypal email">
+                                        <input type="email" name="paypal" class="form-control"
+                                               placeholder="Paypal email" title="Введите email-адрес">
                                     </div>
                                 </div>
                             </div>
-
                             <div class="card">
                                 <div class="card-header p-0">
                                     <h2 class="mb-0">
-                                        <button class="btn btn-light btn-block text-left p-3 rounded-0"
+                                        <button type="button" class="btn btn-light btn-block text-left p-3 rounded-0"
                                                 data-toggle="collapse" data-target="#collapseOne" aria-expanded="true"
                                                 aria-controls="collapseOne">
                                             <div class="d-flex align-items-center justify-content-between">
-
                                                 <span>Карта</span>
                                                 <div class="icons">
                                                     <img src="https://invest-brands.cdn-tinkoff.ru/US92826C8394x640.png"
@@ -71,12 +66,10 @@
                                                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqPcx-LTSh0STAA14f8yfkztc1MhivXdc7yWaZPaR1zg&s"
                                                          width="30">
                                                 </div>
-
                                             </div>
                                         </button>
                                     </h2>
                                 </div>
-
                                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne"
                                      data-parent="#accordionExample">
                                     <div class="card-body payment-card-body">
@@ -86,10 +79,9 @@
 
                                             <i class="fa fa-credit-card"></i>
                                             <input type="text" name="card_number" class="form-control"
-                                                   placeholder="0000 0000 0000 0000">
-
+                                                   placeholder="0000 0000 0000 0000" value="" title="Введите номер карты"
+                                                   >
                                         </div>
-
                                         <div class="row mt-3 mb-3">
 
                                             <div class="col-md-6">
@@ -99,114 +91,71 @@
 
                                                     <i class="fa fa-calendar"></i>
                                                     <input type="text" name="expiry_date" class="form-control"
-                                                           placeholder="MM/YY">
-
+                                                           placeholder="MM/YY" value="" title="Введите данные о дате карты"
+                                                           >
                                                 </div>
-
                                             </div>
-
                                             <div class="col-md-6">
 
                                                 <span class="font-weight-normal card-text">CVC/CVV</span>
                                                 <div class="input">
 
                                                     <i class="fa fa-lock"></i>
-                                                    <input type="text" name="cvc" class="form-control"
-                                                           placeholder="000">
-
+                                                    <input type="password" name="cvc" class="form-control"
+                                                           placeholder="000" value="" title="Введите CVC/CVV карты" >
                                                 </div>
-
                                             </div>
                                         </div>
-
-
                                         <span class="text-muted certificate-text"><i class="fa fa-lock"></i> Ваше соединение защищено с помощью ssl сертификата</span>
-
                                     </div>
                                 </div>
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
                 <div class="col-md-6">
                     <span>Итого</span>
-
                     <div class="card">
-
                         <div class="d-flex justify-content-between p-3">
                             {% for item in cart_items.0 %}
                             <div class="d-flex flex-column mb-3">
-                                <span>{{ item.name }}</span>
-                                <span>{{ item.quantity }}</span>
+                                <span>{{ item.name }} - {{ item.quantity }} шт. </span>
+                                <br>
                             </div>
                             {% endfor %}
-
-
                             <div class="mt-1">
                                 <span class="super-price">{{ total_price }} руб.</span>
                             </div>
-
                         </div>
-
                         <hr class="mt-0 line">
-
                         <div class="p-3">
                             <div class="d-flex justify-content-between">
-
                                 <span>Скидка </span>
-                                <span>{{ discount }}</span>
-
+                                <span>{{ discount }}%</span>
                             </div>
-
                             <div class="d-flex justify-content-between mb-2">
-
                                 <span>Бонусы и скидки</span>
                                 {% if discount %}
-                                <span>{{ total_price*(discount/100) }}</span>
+                                <span>{{ total_price*(discount/100) }} руб.</span>
                                 {% else %}
-                                <span>{{ discount }}</span>
+                                <span>{{ discount }} руб.</span>
                                 {% endif %}
-
                             </div>
-
-
                         </div>
-
                         <hr class="mt-0 line">
-
-
                         <div class="p-3 d-flex justify-content-between">
-
                             <div class="d-flex flex-column">
-
                                 <span>Окончательная цена</span>
-
                             </div>
-                            <span>{{ total_price - total_price*(discount/100)  }}</span>
-
-
+                            <span>{{ total_price - total_price*(discount/100)  }} руб.</span>
                         </div>
-
-
                         <div class="p-3">
-
                             <button type="submit" class="btn btn-primary btn-block free-button">Оплатить</button>
-
                         </div>
-
-
                     </div>
                 </div>
-
             </div>
-
-
         </div>
-
     </div>
 </form>
 

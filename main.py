@@ -124,9 +124,6 @@ def cart():
     return render_template('cart.html', user_id=user_id, cart_items=cart_items, total_price=total_price)
 
 
-# Обработчик для страницы оплаты
-
-
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     global total_price
@@ -135,34 +132,40 @@ def process_payment():
         error_message = 'Ошибка: Для просмотра статуса необходимо выполнить вход.'
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     if request.method == 'POST':
-        card_number = request.form.get("card_number")
-        if request.form.get("expiry_date").split('/'):
-            exp_month, exp_year = request.form.get("expiry_date").split('/')
+        if request.form.get("paypal"):
+            print('paypal')
+            CartItem.query.filter_by(user_id=user_id).delete()
+            db.session.commit()
+            return redirect('/payment_success')
         else:
-            error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
-            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+            print('card')
+            card_number = request.form.get("card_number")
+            if '/' in request.form.get("expiry_date"):
+                exp_month, exp_year = request.form.get("expiry_date").split('/')
+            else:
+                error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
+                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
-        cvc = request.form.get("cvc")
-        if len(card_number) != 16 or not card_number.isdigit():
-            error_message = 'Ошибка: Неверный номер карты.'
-            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+            cvc = request.form.get("cvc")
+            if len(card_number) != 16 or not card_number.isdigit():
+                error_message = 'Ошибка: Неверный номер карты.'
+                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
-        if not (1 <= int(exp_month) <= 12):
-            error_message = 'Ошибка: Неверный месяц окончания срока действия карты.'
-            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+            if not (1 <= int(exp_month) <= 12):
+                error_message = 'Ошибка: Неверный месяц окончания срока действия карты.'
+                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
-        current_year = datetime.now().year
-        if current_year <= int(exp_year) <= current_year + 10:
-            error_message = 'Ошибка: Неверный год окончания срока действия карты.'
-            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+            current_year = datetime.now().year
+            if current_year <= int(exp_year) <= current_year + 10:
+                error_message = 'Ошибка: Неверный год окончания срока действия карты.'
+                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
-        if len(cvc) != 3 or not cvc.isdigit():
-            error_message = 'Ошибка: Неверный CVV/CVC.'
-            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
-        CartItem.query.filter_by(user_id=user_id).delete()
-        db.session.commit()
-
-        return redirect('/payment_success')
+            if len(cvc) != 3 or not cvc.isdigit():
+                error_message = 'Ошибка: Неверный CVV/CVC.'
+                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+            CartItem.query.filter_by(user_id=user_id).delete()
+            db.session.commit()
+            return redirect('/payment_success')
 
     return "Ошибка: Неверный метод запроса"
 
