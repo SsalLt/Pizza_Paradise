@@ -23,6 +23,12 @@ MENU = [
 ]
 total_price = 0
 cart_items = []
+promo_in_rub = 0
+new_total_price = 0
+card_num = None
+CVV = None
+expiry_date = None
+paypal_mail = None
 
 
 class User(db.Model):
@@ -86,7 +92,6 @@ def reviews():
                                                        Review.comment).all()
     user_id = get_user_id()
     review_exists = Review.query.filter_by(user_id=user_id).first() is not None if user_id is not None else False
-    print(reviews_data)
     return render_template('reviews.html', reviews_data=reviews_data, user_id=user_id, review_exists=review_exists,
                            none=None)
 
@@ -124,29 +129,47 @@ def cart():
     return render_template('cart.html', user_id=user_id, cart_items=cart_items, total_price=total_price)
 
 
+# Обработчик для страницы оплаты
+
+def get_info():
+    print(request.form)
+    paypal_email = request.form.get("paypal")
+    card_number = request.form.get("card_number")
+    cvc = request.form.get("cvc")
+    expiry_date = request.form.get("expiry_date")
+
+    if paypal_email:
+        return paypal_email, 'paypal'
+    elif card_number and cvc and expiry_date:
+        return card_number, cvc, expiry_date
+    else:
+        return None
+
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     global total_price
+    global CVV
+    global card_num
+    global expiry_date
     user_id = get_user_id()
     if user_id is None:
         error_message = 'Ошибка: Для просмотра статуса необходимо выполнить вход.'
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     if request.method == 'POST':
-        if request.form.get("paypal"):
-            print('paypal')
+        data = get_info()
+        if 'paypal' in data:
             CartItem.query.filter_by(user_id=user_id).delete()
             db.session.commit()
             return redirect('/payment_success')
         else:
-            print('card')
-            card_number = request.form.get("card_number")
-            if '/' in request.form.get("expiry_date"):
-                exp_month, exp_year = request.form.get("expiry_date").split('/')
+            card_number, cvc, expiryy_date = data
+            if '/' in expiryy_date:
+                exp_month, exp_year = expiryy_date.split('/')
             else:
                 error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
                 return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
-            cvc = request.form.get("cvc")
             if len(card_number) != 16 or not card_number.isdigit():
                 error_message = 'Ошибка: Неверный номер карты.'
                 return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
@@ -172,14 +195,39 @@ def process_payment():
 
 @app.route('/payment_success', methods=['GET', 'POST'])
 def payment_success():
-    print(session)
-    global total_price
+    global new_total_price
     user_id = get_user_id()
     user = User.query.get(user_id)
-    if not session['payment_confirmation_sent'] and user:
-        send_payment_confirmation_email(user.username, total_price)
+    if not session['payment_confirmation_sent']:
+        send_payment_confirmation_email(user.username, new_total_price)
         session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
     return render_template('payment_success.html', user_id=user_id, total_price=total_price)
+
+
+@app.route('/apply_promo_code', methods=['POST'])
+def apply_promo_code():
+    user_id = get_user_id()
+    global CVV
+    global card_num
+    global expiry_date
+    global total_price
+    global promo_in_rub
+    global paypal_mail
+    global new_total_price
+    data = get_info()
+    if 'paypal' in data:
+        paypal_mail = data[0]
+    else:
+        card_num, CVV, expiry_date = data
+    new_total_price = total_price
+    promo_code = request.form.get('promo_code')
+    new_discount = int(promo_code)
+    if new_discount >= 0:
+        promo_in_rub = total_price * (new_discount / 100)
+    new_total_price -= promo_in_rub
+    return render_template('testpayment.html', discount=new_discount, total_price=new_total_price,
+                           promo_in_rub=promo_in_rub, cart_items=[cart_items], user_id=user_id, CVV=CVV,
+                           expiry_date=expiry_date, card_num=card_num, paypal_mail=paypal_mail)
 
 
 def send_payment_confirmation_email(recipient_email, price):
@@ -197,15 +245,16 @@ def send_payment_confirmation_email(recipient_email, price):
 def payment():
     global total_price
     global cart_items
+    global promo_in_rub
     user_id = get_user_id()
-    discount = 20
+    discount = 0
     if user_id is None:
         error_message = 'Ошибка: Для оплаты необходимо выполнить вход.'
         return render_template('testpayment.html', user_id=user_id, error_message=error_message, none=None)
 
     if request.method == 'POST':
         return render_template('testpayment.html', user_id=user_id, total_price=total_price, cart_items=[cart_items],
-                               discount=discount)
+                               discount=discount, promo_in_rub=promo_in_rub)
 
     return render_template('testpayment.html', total_price=total_price, user_id=user_id)
 
@@ -234,7 +283,6 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         user = User.query.filter_by(username=username, password=password).first()
-        print(user)
         if user is not None:
             session['user_id'] = user.id
             return redirect(url_for('menu'))
