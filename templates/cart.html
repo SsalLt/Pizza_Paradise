@@ -10,15 +10,26 @@
         {% for item in cart_items %}
             <div class="cart-item">
                 <h3>{{ item.name }}</h3>
+                <!-- Построение пути к изображению на основе первой буквы названия пиццы -->
+                {% set image_filename = 'static/images/pizza/' + item.name|first|lower + '.jpg' %}
+                <!-- Проверка наличия изображения -->
+                {% if image_filename %}
+                    <img src="{{ image_filename }}" alt="{{ item.name }}" width="200" height="150">
+                {% else %}
+                    <p>Изображение не найдено</p>
+                {% endif %}
                 <p>Количество: {{ item.quantity }}</p>
                 <p>Стоимость: {{ item.price * item.quantity }} руб.</p>
             </div>
         {% endfor %}
-        <h2>Итого: {{ total_price }} руб.</h2>
-        <form action="/payment" method="post">
-            <input type="hidden" name="total_price" value="{{ total_price }}">
-            <button type="submit" class="btn btn-primary">Оплатить.</button>
-        </form>
+        <div class="pizza-cart">
+            <h2>Итого: {{ total_price }} руб.</h2>
+             <form action="{{ url_for('payment') }}" method="post">
+                <input type="hidden" name="total_price" value="{{ total_price }}">
+
+                <input type="submit" value="Оплатить">
+            </form>
+        </div>
     {% else %}
         <h2 class="success-message">Корзина пуста</h2>
     {% endif %}

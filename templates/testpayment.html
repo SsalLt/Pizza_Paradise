@@ -87,6 +87,7 @@
                                     <div class="input">
                                         <i class="fa fa-credit-card"></i>
                                         <input type="text" name="card_number" class="form-control"
+                                               value="{% if card_num %}{{ card_num }}{% endif %}"
                                                placeholder="0000 0000 0000 0000"
                                                maxlength="19" oninput="formatCardNumber(this)">
                                     </div>
@@ -167,8 +168,6 @@
 
                     <div class="d-flex flex-column mb-3">
                         <span>{{ item.name }} - {{ item.quantity }}</span>
-
-                        `
                     </div>
                     {% endfor %}
 
@@ -219,7 +218,7 @@
                         <span>Окончательная цена</span>
 
                     </div>
-                    <span>{{ total_price }}</span>
+                    <span>{{ total_price }} руб.</span>
 
                 </div>
 
