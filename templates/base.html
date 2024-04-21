@@ -7,7 +7,13 @@
 </head>
 <body>
 <header>
+    <!-- Логотип слева -->
+    <div class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Логотип">
+    </div>
+    <!-- Название сайта справа от логотипа -->
     <h1>PizzaParadise</h1>
+    <!-- Навигационное меню -->
     <nav>
         <a href="{{ url_for('menu') }}">Меню</a>
         <a href="{{ url_for('about') }}">О нас</a>

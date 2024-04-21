@@ -10,14 +10,16 @@
     <p>Комментарий: {{ review[5] }}</p>
 </div>
 {% endfor %}
-{% if user_id is not none %}
+{% if user_id %}
 {% if not review_exists %}
-<form action="{{ url_for('add_review') }}" method="post" class="review-form">
-    <input type="text" name="author" placeholder="Ваше имя" required><br>
-    <input type="number" name="rating" min="1" max="5" placeholder="Рейтинг (от 1 до 5)" required><br>
-    <textarea name="comment" placeholder="Ваш отзыв" required></textarea><br>
-    <input type="submit" value="Написать отзыв">
-</form>
+<div class="review-form-container">
+    <form action="{{ url_for('add_review') }}" method="post" class="review-form">
+        <input type="text" name="author" value="Имя пользователя: {{ username }}" required readonly>
+        <input type="number" name="rating" min="1" max="5" placeholder="Рейтинг (от 1 до 5)" required><br>
+        <textarea name="comment" placeholder="Ваш отзыв" required></textarea><br>
+        <input type="submit" value="Написать отзыв">
+    </form>
+</div>
 {% endif %}
 {% endif %}
 {% endblock %}

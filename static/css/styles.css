@@ -1,30 +1,46 @@
 /* Header Styles */
 header {
     background-color: #f1f1f1;
-    padding: 20px;
-    text-align: center;
-    font-size: 20px; /* Font size set to 20px */
+    padding: 2%;
+    display: flex; /* Используем flexbox для расположения элементов */
+    justify-content: space-between; /* Равномерно распределяем элементы по горизонтали */
+    align-items: center; /* Выравниваем элементы по вертикали */
+    font-size: 20px;
+
 }
+
 
 /* Navigation Styles */
 nav {
     display: flex;
-    justify-content: space-around;
+    gap: 10px; /* Пространство между кнопками */
 }
 
 nav a {
     background-color: #4CAF50;
     color: white;
-    padding: 16px 24px; /* Increased button size */
+    padding: 16px 24px;
     text-align: center;
     text-decoration: none;
     border-radius: 4px;
-    font-size: 20px; /* Font size set to 20px */
+    font-size: 20px;
 }
 
 nav a:hover {
     background-color: #3e8e41;
-    font-size: 20px; /* Font size set to 20px */
+}
+
+.logo {
+    width: 10%;
+    height: 10%;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 2%;
+}
+
+.logo img {
+    width: 100%;
+    height: auto;
 }
 
 /* Error Message Styles */
@@ -33,11 +49,20 @@ nav a:hover {
     text-align: center; /* Центрирование текста */
     font-size: 40px;
 }
+.error-discount-message {
+    color: red;
+    text-align: center; /* Центрирование текста */
+    font-size: 20px;}
 /* Success Message Styles */
 .success-message {
     color: green;
     text-align: center; /* Центрирование текста */
     font-size: 40px;
+}
+.error-success-message {
+    color: green;
+    text-align: center;
+    font-size: 20px;
 }
 /* Pay form Styles */
 .pay-form {
@@ -190,7 +215,6 @@ nav a:hover {
     margin-right: 20%;
 }
 
-.review-form input[type="text"],
 .review-form input[type="number"],
 .review-form textarea,
 .review-form input[type="submit"] {
@@ -214,3 +238,22 @@ nav a:hover {
     background-color: #45a049;
     font-size: 20px; /* Font size set to 20px */
 }
+
+.review-form input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #a;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 30px;
+}
+
+
+/* Review Form Styles */
+.review-form-container {
+    margin-top: 20px;
+    font-size: 20px;
+    text-align: center;
+}
+
