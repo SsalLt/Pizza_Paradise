@@ -1,33 +1,67 @@
 /* Header Styles */
 header {
     background-color: #f1f1f1;
-    padding: 2%;
-    display: flex; /* Используем flexbox для расположения элементов */
-    justify-content: space-between; /* Равномерно распределяем элементы по горизонтали */
-    align-items: center; /* Выравниваем элементы по вертикали */
+    padding: 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     font-size: 20px;
-
 }
 
+.site-title {
+    color: inherit; /* Использует цвет текста, унаследованный от родительского элемента */
+    text-decoration: none; /* Убирает подчеркивание ссылки */
+}
+
+.site-title:hover {
+    color: inherit; /* Использует цвет текста, унаследованный от родительского элемента */
+    text-decoration: none; /* Убирает подчеркивание ссылки */
+}
+
+h1 {
+    margin-right: 5%; /* Отступ справа от названия в процентах */
+}
 
 /* Navigation Styles */
 nav {
     display: flex;
-    gap: 10px; /* Пространство между кнопками */
+    gap: 10px; /* Отступ между кнопками */
+    margin-left: auto; /* Это выравнивает элементы справа */
 }
 
 nav a {
-    background-color: #4CAF50;
+    background-color: #f90;
     color: white;
-    padding: 16px 24px;
+    padding: 16px 24px; /* Отступы внутри кнопок */
     text-align: center;
     text-decoration: none;
     border-radius: 4px;
-    font-size: 20px;
+    font-size: 24px; /* Размер шрифта в зависимости от ширины экрана */
+    flex-grow: 1; /* Растягиваем кнопки на всю доступную ширину */
 }
 
 nav a:hover {
-    background-color: #3e8e41;
+    color: white;
+    background-color: #e08700;
+}
+
+img, svg {
+    vertical-align: middle;
+}
+img {
+    overflow-clip-margin: content-box;
+    overflow: clip;
+}
+
+nav a.profile-button {
+    font-size: 26px;
+    background-color: #f1f1f1;
+    color: black;
+}
+
+nav a.profile-button:hover {
+    background-color: #f1f1f1;
+    color: #f90;
 }
 
 .logo {
@@ -43,27 +77,92 @@ nav a:hover {
     height: auto;
 }
 
+.ava {
+    width: 10%;
+    height: 10%;
+    overflow: hidden;
+    margin-right: 2%;
+}
+
+.ava img {
+    width: 100%;
+    height: auto;
+}
+
+body {
+  margin: 0;
+}
+
 /* Error Message Styles */
 .error-message {
     color: red;
     text-align: center; /* Центрирование текста */
     font-size: 40px;
 }
+
+.error-message1 {
+    color: #4d4943;
+    text-align: center;
+    font-size: 20px;
+}
+
+.error-message1 h1 {
+    color: #383838;
+    font-size: 80px;
+}
+
 .error-discount-message {
     color: red;
     text-align: center; /* Центрирование текста */
     font-size: 20px;}
 /* Success Message Styles */
 .success-message {
-    color: green;
+    color: #fa0;
     text-align: center; /* Центрирование текста */
     font-size: 40px;
 }
 .error-success-message {
-    color: green;
+    color: #fa0;
     text-align: center;
     font-size: 20px;
 }
+.containererr {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+}
+.logoerr {
+    height: 20%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.ret {
+    background-color: orange;
+    color: white;
+    padding: 16px 24px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 20px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+}
+.ret a{
+    text-decoration: none;
+    color: white;
+}
+.ret:hover {
+    background-color: darkorange;
+    text-decoration: none;
+
+}
+
 /* Pay form Styles */
 .pay-form {
     color: black;
@@ -77,7 +176,11 @@ nav a:hover {
     margin: 10px;
     font-size: 20px; /* Font size set to 20px */
 }
-
+.cart-itog {
+    padding: 5px;
+    margin: 5px;
+    font-size: 20px;
+}
 /* Login Form Styles */
 .login-form {
     margin-top: 20px;
@@ -103,7 +206,7 @@ nav a:hover {
 }
 
 .login-form input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: #f90;
     color: white;
     cursor: pointer;
     font-size: 20px; /* Font size set to 20px */
@@ -111,7 +214,7 @@ nav a:hover {
 }
 
 .login-form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #e08700;
     font-size: 20px; /* Font size set to 20px */
 }
 
@@ -122,7 +225,26 @@ nav a:hover {
     margin: 10px;
     font-size: 20px; /* Font size set to 20px */
 }
+.pizza-cart {
+    margin: 10px;
+    font-size: 20px; /* Font size set to 20px */
+}
+.pizza-cart form input[type="submit"] {
+    background-color: orange;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-size: 20px;
+}
 
+.pizza-cart form input[type="submit"]:hover {
+    background-color: darkorange;
+    font-size: 20px;
+}
 .pizza-item h3 {
     margin-bottom: 5px;
     font-size: 20px; /* Font size set to 20px */
@@ -134,7 +256,7 @@ nav a:hover {
 }
 
 .pizza-item form input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: #f90;
     color: white;
     padding: 10px 15px;
     text-align: center;
@@ -146,7 +268,7 @@ nav a:hover {
 }
 
 .pizza-item form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #e08700;
     font-size: 20px; /* Font size set to 20px */
 }
 
@@ -175,14 +297,14 @@ nav a:hover {
 }
 
 .register-form input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: #f90;
     color: white;
     cursor: pointer;
     font-size: 20px; /* Font size set to 20px */
 }
 
 .register-form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #e08700;
     font-size: 20px; /* Font size set to 20px */
 }
 
@@ -228,14 +350,14 @@ nav a:hover {
 }
 
 .review-form input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: #f90;
     color: white;
     cursor: pointer;
     font-size: 20px; /* Font size set to 20px */
 }
 
 .review-form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #e08700;
     font-size: 20px; /* Font size set to 20px */
 }
 
@@ -255,5 +377,11 @@ nav a:hover {
     margin-top: 20px;
     font-size: 20px;
     text-align: center;
+}
+
+.text-center mt-3 {
+    width: 200px;
+    font-size: 20px;
+    padding: 10px 20px;
 }
 

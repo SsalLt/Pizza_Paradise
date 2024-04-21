@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Личный кабинет{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<header>
+    <div class="ava">
+        {% if user.avatar %}
+        <img src="{{ url_for('static', filename='images/avatars/' + user.avatar) }}" alt="Аватар">
+        {% else %}
+        <img src="{{ url_for('static', filename='images/default_avatar.jpg') }}" alt="Аватар">
+        {% endif %}
+    </div>
+    <h1 class="username">{{ username }}</h1>
+    <nav>
+        <a href="{{ url_for('index') }}">Обратно</a>
+    </nav>
+</header>
+
+<main>
+    <div class="profile-info">
+        <form action="{{ url_for('update_profile') }}" method="post" enctype="multipart/form-data">
+            <h3><label for="full_name">Фамилия и имя:</label></h3>
+            <input type="text" id="full_name" name="full_name" value="{{ user.first_name }} {{ user.last_name }}">
+            <p><label for="avatar">Аватар:</label>
+            <input type="file" id="avatar" name="avatar">
+            <p><button type="submit">Обновить профиль</button>
+        </form>
+        <a href="{{ url_for('logout') }}">Выход</a>
+    </div>
+
+</main>
+
+</body>
+</html>
