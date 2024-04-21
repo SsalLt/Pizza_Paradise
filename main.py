@@ -30,6 +30,8 @@ CVV = None
 expiry_date = None
 paypal_mail = None
 
+PROMO = {"зимняя сказка": 99}
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -91,8 +93,11 @@ def reviews():
     reviews_data = Review.query.join(User).add_columns(Review.id, User.username, Review.author, Review.rating,
                                                        Review.comment).all()
     user_id = get_user_id()
+    username = get_email(user_id)
+    print(username)
     review_exists = Review.query.filter_by(user_id=user_id).first() is not None if user_id is not None else False
-    return render_template('reviews.html', reviews_data=reviews_data, user_id=user_id, review_exists=review_exists,
+    return render_template('reviews.html', reviews_data=reviews_data,
+                           user_id=user_id, username=username, review_exists=review_exists,
                            none=None)
 
 
@@ -101,7 +106,7 @@ def add_review():
     user_id = get_user_id()
     if user_id is None:
         return redirect(url_for('reviews'))
-    author = request.form.get("author")
+    author = (request.form.get("author")).lstrip('Имя пользователя: ')
     rating = int(request.form.get("rating"))
     comment = request.form.get("comment")
     review = Review(user_id=user_id, author=author, rating=rating, comment=comment)
@@ -158,37 +163,48 @@ def process_payment():
         return render_template('cart.html', user_id=user_id, error_message=error_message, none=None)
     if request.method == 'POST':
         data = get_info()
-        if 'paypal' in data:
-            CartItem.query.filter_by(user_id=user_id).delete()
-            db.session.commit()
-            return redirect('/payment_success')
-        else:
-            card_number, cvc, expiryy_date = data
-            if '/' in expiryy_date:
-                exp_month, exp_year = expiryy_date.split('/')
+        if data:
+            if 'paypal' in data:
+                CartItem.query.filter_by(user_id=user_id).delete()
+                db.session.commit()
+                return redirect('/payment_success')
             else:
-                error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
-                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+                card_number, cvc, expiryy_date = data
+                if '/' in expiryy_date:
+                    exp_month, exp_year = expiryy_date.split('/')
+                else:
+                    error_message = 'Ошибка: Неверный формат даты окончания действия карты.'
+                    return render_template('payment_failure.html', user_id=user_id, error_message=error_message,
+                                           none=None)
+                if ' ' in card_number:
+                    card_number: str = card_number.replace(' ', '')
+                    # print(card_number, type(card_number))
+                if len(card_number) != 16 or not card_number.isdigit():
+                    error_message = 'Ошибка: Неверный номер карты.'
+                    return render_template('payment_failure.html', user_id=user_id, error_message=error_message,
+                                           none=None)
 
-            if len(card_number) != 16 or not card_number.isdigit():
-                error_message = 'Ошибка: Неверный номер карты.'
-                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+                if not (1 <= int(exp_month) <= 12):
+                    error_message = 'Ошибка: Неверный месяц окончания срока действия карты.'
+                    return render_template('payment_failure.html', user_id=user_id, error_message=error_message,
+                                           none=None)
 
-            if not (1 <= int(exp_month) <= 12):
-                error_message = 'Ошибка: Неверный месяц окончания срока действия карты.'
-                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
+                current_year = datetime.now().year
+                if current_year <= int(exp_year) <= current_year + 10:
+                    error_message = 'Ошибка: Неверный год окончания срока действия карты.'
+                    return render_template('payment_failure.html', user_id=user_id, error_message=error_message,
+                                           none=None)
 
-            current_year = datetime.now().year
-            if current_year <= int(exp_year) <= current_year + 10:
-                error_message = 'Ошибка: Неверный год окончания срока действия карты.'
-                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
-
-            if len(cvc) != 3 or not cvc.isdigit():
-                error_message = 'Ошибка: Неверный CVV/CVC.'
-                return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
-            CartItem.query.filter_by(user_id=user_id).delete()
-            db.session.commit()
-            return redirect('/payment_success')
+                if len(cvc) != 3 or not cvc.isdigit():
+                    error_message = 'Ошибка: Неверный CVV/CVC.'
+                    return render_template('payment_failure.html', user_id=user_id, error_message=error_message,
+                                           none=None)
+                CartItem.query.filter_by(user_id=user_id).delete()
+                db.session.commit()
+                return redirect('/payment_success')
+        else:
+            error_message = 'Ошибка: Неверный формат платёжных данных.'
+            return render_template('payment_failure.html', user_id=user_id, error_message=error_message, none=None)
 
     return "Ошибка: Неверный метод запроса"
 
@@ -196,12 +212,18 @@ def process_payment():
 @app.route('/payment_success', methods=['GET', 'POST'])
 def payment_success():
     global new_total_price
+    global total_price
     user_id = get_user_id()
     user = User.query.get(user_id)
+    price = 0
+    if new_total_price:
+        price = new_total_price
+    else:
+        price = total_price
     if not session['payment_confirmation_sent']:
-        send_payment_confirmation_email(user.username, new_total_price)
+        send_payment_confirmation_email(user.username, price)
         session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
-    return render_template('payment_success.html', user_id=user_id, total_price=total_price)
+    return render_template('payment_success.html', user_id=user_id, total_price=price)
 
 
 @app.route('/apply_promo_code', methods=['POST'])
@@ -214,20 +236,32 @@ def apply_promo_code():
     global promo_in_rub
     global paypal_mail
     global new_total_price
+    error_message = None
+    success_message = None
     data = get_info()
-    if 'paypal' in data:
-        paypal_mail = data[0]
+    new_discount = 0
+    if data:
+        if 'paypal' in data:
+            paypal_mail = data[0]
+        else:
+            card_num, CVV, expiry_date = data
     else:
-        card_num, CVV, expiry_date = data
+        paypal_mail = None
     new_total_price = total_price
     promo_code = request.form.get('promo_code')
-    new_discount = int(promo_code)
-    if new_discount >= 0:
-        promo_in_rub = total_price * (new_discount / 100)
+    try:
+        if PROMO[promo_code.lower()]:
+            new_discount = int(PROMO[promo_code])
+            promo_in_rub = round(total_price * (new_discount / 100), 2)
+            success_message = f'Промокод на скидку {new_discount}% успешно активирован'
+    except KeyError:
+        error_message = 'Введен некорректный промокод'
+
     new_total_price -= promo_in_rub
     return render_template('testpayment.html', discount=new_discount, total_price=new_total_price,
                            promo_in_rub=promo_in_rub, cart_items=[cart_items], user_id=user_id, CVV=CVV,
-                           expiry_date=expiry_date, card_num=card_num, paypal_mail=paypal_mail)
+                           expiry_date=expiry_date, card_num=card_num, paypal_mail=paypal_mail,
+                           error_message=error_message, success_message=success_message)
 
 
 def send_payment_confirmation_email(recipient_email, price):
@@ -297,9 +331,12 @@ def register():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
+        password1 = request.form.get("password1")
         existing_user = User.query.filter_by(username=username).first()
         if existing_user is not None:
             error_message = 'Такой логин уже используется.'
+        elif password != password1:
+            error_message = 'Введенные пароли не совпадают'
         else:
             new_user = User(username=username, password=password)
             db.session.add(new_user)

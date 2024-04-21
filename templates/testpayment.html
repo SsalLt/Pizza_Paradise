@@ -85,30 +85,47 @@
 
                                     <span class="font-weight-normal card-text">Card Number</span>
                                     <div class="input">
-
                                         <i class="fa fa-credit-card"></i>
                                         <input type="text" name="card_number" class="form-control"
                                                placeholder="0000 0000 0000 0000"
-                                               value="{% if card_num %}{{ card_num }}{% endif %}">
-
-
+                                               maxlength="19" oninput="formatCardNumber(this)">
                                     </div>
+
+                                    <script>
+                                        // Функция для автоматического разделения номера карты пробелами
+                                        function formatCardNumber(input) {
+                                            // Удаление всех нечисловых символов из введенного значения
+                                            var cardNumber = input.value.replace(/\D/g, '');
+                                            // Добавление пробелов каждые 4 символа
+                                            var formattedCardNumber = cardNumber.replace(/(\d{4})/g, '$1 ').trim();
+                                            // Обновление значения поля ввода
+                                            input.value = formattedCardNumber;
+                                        }
+                                    </script>
 
                                     <div class="row mt-3 mb-3">
 
                                         <div class="col-md-6">
-
                                             <span class="font-weight-normal card-text">Дата</span>
                                             <div class="input">
-
                                                 <i class="fa fa-calendar"></i>
                                                 <input type="text" name="expiry_date" class="form-control"
-                                                       placeholder="MM/YY"
-                                                       value="{% if expiry_date %}{{ expiry_date }}{% endif %}">
-
+                                                       placeholder="MM/YY" maxlength="5"
+                                                       value="{% if expiry_date %}{{ expiry_date }}{% endif %}"
+                                                       onkeyup="formatDate(this)">
                                             </div>
-
                                         </div>
+
+                                        <script>
+                                            // Функция для автоматического добавления слеша после ввода месяца
+                                            function formatDate(input) {
+                                                var value = input.value;
+                                                if (value.match(/^\d{2}$/) !== null) {
+                                                    input.value = value + '/';
+                                                }
+                                            }
+                                        </script>
+
 
                                         <div class="col-md-6">
 
@@ -126,7 +143,7 @@
                                         </div>
                                     </div>
 
-                                    <span class="text-muted certificate-text"><i class="fa fa-lock"></i> Ваше соединение защищено с помощью ssl сертификата</span>
+                                    <span class="text-muted certificate-text"><i class="fa fa-lock"></i> Не является системой оплаты. Не вводите реальные данные карты!</span>
 
                                 </div>
                             </form>
@@ -151,7 +168,8 @@
                     <div class="d-flex flex-column mb-3">
                         <span>{{ item.name }} - {{ item.quantity }}</span>
 
-`                    </div>
+                        `
+                    </div>
                     {% endfor %}
 
                     <div class="mt-1">
@@ -164,6 +182,9 @@
 
                 <div class="p-3">
                     <form action="/apply_promo_code" method="post">
+                        <h2 class="error-discount-message">{% if error_message %}{{ error_message }}{% endif %}</h2>
+                        <h2 class="error-success-message">{% if success_message %}{{ success_message }}{% endif %}</h2>
+
                         <div class="input-group mb-3">
                             <input type="text" name="promo_code" class="form-control" placeholder="Enter promo code"
                                    aria-label="Enter promo code" aria-describedby="basic-addon2">
@@ -215,83 +236,83 @@
 
 </div>
 <script>
-document.getElementById('payButton').addEventListener('click', function(event) {
-    event.preventDefault();
+    document.getElementById('payButton').addEventListener('click', function(event) {
+        event.preventDefault();
 
-    var paymentForm = document.getElementById('paymentForm');
-    var paypalForm = document.getElementById('paypalForm');
+        var paymentForm = document.getElementById('paymentForm');
+        var paypalForm = document.getElementById('paypalForm');
 
-    // Create a new form that combines paymentForm and paypalForm
-    var combinedForm = document.createElement('form');
-    combinedForm.method = 'POST';
-    combinedForm.action = '/process_payment';
+        // Create a new form that combines paymentForm and paypalForm
+        var combinedForm = document.createElement('form');
+        combinedForm.method = 'POST';
+        combinedForm.action = '/process_payment';
 
-    // Add all input fields from paymentForm to combinedForm
-    for (var i = 0; i < paymentForm.elements.length; i++) {
-        var input = paymentForm.elements[i];
-        if (input.name && input.type !== 'submit') {
-            var newInput = input.cloneNode(true);
-            combinedForm.appendChild(newInput);
+        // Add all input fields from paymentForm to combinedForm
+        for (var i = 0; i < paymentForm.elements.length; i++) {
+            var input = paymentForm.elements[i];
+            if (input.name && input.type !== 'submit') {
+                var newInput = input.cloneNode(true);
+                combinedForm.appendChild(newInput);
+            }
         }
-    }
 
-    // Add all input fields from paypalForm to combinedForm
-    for (var i = 0; i < paypalForm.elements.length; i++) {
-        var input = paypalForm.elements[i];
-        if (input.name && input.type !== 'submit') {
-            var newInput = input.cloneNode(true);
-            combinedForm.appendChild(newInput);
+        // Add all input fields from paypalForm to combinedForm
+        for (var i = 0; i < paypalForm.elements.length; i++) {
+            var input = paypalForm.elements[i];
+            if (input.name && input.type !== 'submit') {
+                var newInput = input.cloneNode(true);
+                combinedForm.appendChild(newInput);
+            }
         }
-    }
 
-    // Submit the combined form
-    document.body.appendChild(combinedForm);
-    combinedForm.submit();
-});
+        // Submit the combined form
+        document.body.appendChild(combinedForm);
+        combinedForm.submit();
+    });
 
-document.getElementById('send_data').addEventListener('click', function(event) {
-    event.preventDefault();
+    document.getElementById('send_data').addEventListener('click', function(event) {
+        event.preventDefault();
 
-    var paymentForm = document.getElementById('paymentForm');
-    var sendDataForm = document.querySelector('form[action="/apply_promo_code"]');
-    var paypalForm = document.getElementById('paypalForm');
+        var paymentForm = document.getElementById('paymentForm');
+        var sendDataForm = document.querySelector('form[action="/apply_promo_code"]');
+        var paypalForm = document.getElementById('paypalForm');
 
-    // Create a new form that combines paymentForm, sendDataForm, and paypalForm
-    var combinedForm = document.createElement('form');
-    combinedForm.method = 'POST';
-    combinedForm.action = '/apply_promo_code';
+        // Create a new form that combines paymentForm, sendDataForm, and paypalForm
+        var combinedForm = document.createElement('form');
+        combinedForm.method = 'POST';
+        combinedForm.action = '/apply_promo_code';
 
-    // Add all input fields from paymentForm to combinedForm
-    for (var i = 0; i < paymentForm.elements.length; i++) {
-        var input = paymentForm.elements[i];
-        if (input.name && input.type !== 'submit') {
-            var newInput = input.cloneNode(true);
-            combinedForm.appendChild(newInput);
+        // Add all input fields from paymentForm to combinedForm
+        for (var i = 0; i < paymentForm.elements.length; i++) {
+            var input = paymentForm.elements[i];
+            if (input.name && input.type !== 'submit') {
+                var newInput = input.cloneNode(true);
+                combinedForm.appendChild(newInput);
+            }
         }
-    }
 
-    // Add all input fields from sendDataForm to combinedForm
-    for (var i = 0; i < sendDataForm.elements.length; i++) {
-        var input = sendDataForm.elements[i];
-        if (input.name && input.type !== 'submit') {
-            var newInput = input.cloneNode(true);
-            combinedForm.appendChild(newInput);
+        // Add all input fields from sendDataForm to combinedForm
+        for (var i = 0; i < sendDataForm.elements.length; i++) {
+            var input = sendDataForm.elements[i];
+            if (input.name && input.type !== 'submit') {
+                var newInput = input.cloneNode(true);
+                combinedForm.appendChild(newInput);
+            }
         }
-    }
 
-    // Add all input fields from paypalForm to combinedForm
-    for (var i = 0; i < paypalForm.elements.length; i++) {
-        var input = paypalForm.elements[i];
-        if (input.name && input.type !== 'submit') {
-            var newInput = input.cloneNode(true);
-            combinedForm.appendChild(newInput);
+        // Add all input fields from paypalForm to combinedForm
+        for (var i = 0; i < paypalForm.elements.length; i++) {
+            var input = paypalForm.elements[i];
+            if (input.name && input.type !== 'submit') {
+                var newInput = input.cloneNode(true);
+                combinedForm.appendChild(newInput);
+            }
         }
-    }
 
-    // Submit the combined form
-    document.body.appendChild(combinedForm);
-    combinedForm.submit();
-});
+        // Submit the combined form
+        document.body.appendChild(combinedForm);
+        combinedForm.submit();
+    });
 
 </script>
 

@@ -6,18 +6,28 @@
 <form action="/menu" method="get">
     <div class="text-center mt-3" align="center">
         <button type="submit" class="btn btn-primary"
-                style="width: 200px; font-size: 20px; padding: 10px 20px;">В меню</button>
+                style="width: 200px; font-size: 20px; padding: 10px 20px;">В меню
+        </button>
     </div>
 </form>
 
 
 <script>
-    // Проверяем, была ли страница перезагружена
-    if (performance.navigation.type === 1) {
-        // Если страница была перезагружена, перенаправляем пользователя на страницу меню
+    // Функция для перенаправления на страницу меню
+    function redirectToMenu() {
         window.location.href = '{{ url_for("menu") }}';
     }
 
+    // Проверяем, была ли страница перезагружена
+    if (performance.navigation.type === 1) {
+        // Если страница была перезагружена, перенаправляем пользователя на страницу меню
+        redirectToMenu();
+    }
+
+    // Обработчик события для перенаправления на страницу меню при попытке вернуться на предыдущую страницу
+    window.addEventListener('popstate', function(event) {
+        redirectToMenu();
+    });
 </script>
 
 {% endblock %}
