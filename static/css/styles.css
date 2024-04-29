@@ -225,6 +225,7 @@ body {
     margin: 10px;
     font-size: 20px; /* Font size set to 20px */
 }
+
 .pizza-cart {
     margin: 10px;
     font-size: 20px; /* Font size set to 20px */
@@ -385,3 +386,52 @@ body {
     padding: 10px 20px;
 }
 
+
+#YMapsID {
+    width: 800px;
+    height: 400px;
+    margin: 0 auto;
+}
+.btn-primary {
+    background-color: orange;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-size: 20px;
+}
+.btn-update {
+    background-color: orange;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-size: 18px;
+}
+.profile-thing {
+    padding: 10px;
+    text-align: center;
+    margin: 10px;
+    font-size: 30px; /* Font size set to 20px */
+}
+.profile-del {
+    padding: 10px;
+    text-align: center;
+    margin: 10px;
+    font-size: 20px; /* Font size set to 20px */
+}
+.profile-label {
+    padding: 10px;
+    text-align: center;
+    margin: 10px;
+    font-size: 15px; /* Font size set to 20px */
+}
+.deleted-account {
+    color: red;
+}

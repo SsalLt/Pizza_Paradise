@@ -5,10 +5,12 @@
 {% block content %}
 {% for review in reviews_data %}
 <div class="review-item">
-    <h3>Имя: {{ review[3] }}</h3>
-    <p>Рейтинг: {{ review[4] }}</p>
-    <p>Комментарий: {{ review[5] }}</p>
+    <h3>Имя: {% if review[1] == 'УДАЛЕННЫЙ АККАУНТ' %}<span class="deleted-account">{{ review[1] }}</span>{% else %}{{ review[1] }}{% endif %}</h3>
+    <p>Рейтинг: {{ review[2] }}</p>
+    <p>Комментарий: {{ review[3] }}</p>
 </div>
+
+
 {% endfor %}
 {% if user_id %}
 {% if not review_exists %}

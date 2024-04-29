@@ -4,5 +4,53 @@
 
 {% block content %}
 <h2 class="success-message">О нас</h2>
-<p class="success-message">PizzaParadise - лучшая пиццерия во вселенной!</p>
+<p class="success-message">PizzaParadise - лучшая пиццерия во вселенной! У нас вы найдете настоящую итальянскую пиццу,
+    приготовленную с любовью и уважением к традициям. Наше меню включает в себя классические виды пиццы, такие как
+    пепперони, четыре сыра и маргарита. Мы также предлагаем нашим клиентам купоны на скидку, чтобы сделать наше вкусное
+    пицца еще более доступной.</p>
+
+<div id="YMapsID"></div>
+
+<!-- Подключаем API Яндекс.Карт -->
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=<ваш API-ключ>" type="text/javascript"></script>
+
+<!-- Добавляем стили для карты -->
+<style type="text/css">
+    #YMapsID {
+        width: 520px;
+        height: 500px;
+    }
+</style>
+
+<!-- Добавляем скрипт с кодом карты -->
+<script type="text/javascript">
+ymaps.ready(function () {
+    var myMap = new ymaps.Map('YMapsID', {
+        center: [60.059322, 29.722199],
+        zoom: 12,
+        controls: []
+    });
+
+    var myPlacemark = new ymaps.Placemark(myMap.getCenter(), {
+        balloonContentBody: [
+            '<address>',
+            '<strong>Pizza Paradise</strong>',
+            '<br/>',
+            'Адрес: Санкт-Петербург, 197761б Форт "Обручев" Кронштадтской крепости',
+            '<br/>',
+            'Подробнее: <a href="https://github.com/SsalLt/Pizza_Paradise">https://github.com/SsalLt/Pizza_Paradise</a>',
+            '</address>'
+        ].join('')
+    }, {
+        preset: 'islands#redDotIcon'
+    });
+
+    myMap.geoObjects.add(myPlacemark);
+});
+</script>
+
+<p class="success-message">Авторы:</p>
+<p class="success-message">6k1ttles</p>
+<p class="success-message">SsalLt</p>
+
 {% endblock %}

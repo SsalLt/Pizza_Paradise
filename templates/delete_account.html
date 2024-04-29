@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Удаление аккаунта - PizzaParadise{% endblock %}
+{% block content %}
+<div class="pizza-item profile-del">
+    <h1>Удаление аккаунта</h1>
+    <p>Введите код подтверждения, отправленный на вашу электронную почту:</p>
+    <form action="{{ url_for('confirm_delete_account') }}" method="post" >
+        <label for="confirmation_code">Код подтверждения:</label>
+        <input type="text" id="confirmation_code" name="confirmation_code" required>
+        <button type="submit" class="btn btn-primary btn-update">Подтвердить удаление</button>
+    </form>
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+</div>
+{% endblock %}
+

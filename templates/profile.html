@@ -21,15 +21,16 @@
 </header>
 
 <main>
-    <div class="profile-info">
+    <div class="pizza-item profile-del">
         <form action="{{ url_for('update_profile') }}" method="post" enctype="multipart/form-data">
-            <h3><label for="full_name">Фамилия и имя:</label></h3>
-            <input type="text" id="full_name" name="full_name" value="{{ user.first_name }} {{ user.last_name }}">
-            <p><label for="avatar">Аватар:</label>
-            <input type="file" id="avatar" name="avatar">
-            <p><button type="submit">Обновить профиль</button>
+            <h3><label for="full_name" class="profile-thing">Фамилия и имя:</label></h3>
+            <input type="text" class="profile-label" id="full_name" name="full_name" value="{{ user.first_name }} {{ user.last_name }}">
+            <p><label for="avatar" >Аватар:</label>
+            <input type="file"  id="avatar" name="avatar">
+            <p><button type="submit" class="btn btn-primary btn-update">Обновить профиль</button>
         </form>
-        <a href="{{ url_for('logout') }}">Выход</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-primary btn-update">Выйти из аккаунта</a>
+        <a href="{{ url_for('send_confirmation_code') }}" class="btn btn-primary btn-update">Удалить аккаунт</a>
     </div>
 
 </main>

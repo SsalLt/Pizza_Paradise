@@ -1,10 +1,11 @@
 from datetime import datetime
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 import os
+import random
+import string
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pizzaparadise.db'
@@ -12,8 +13,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_secret_key'
 db = SQLAlchemy(app)
 
-UPLOAD_FOLDER = 'static/images/avatars'  # Папка для сохранения загруженных файлов
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}  # Разрешенные типы файлов
+UPLOAD_FOLDER = 'static/images/avatars'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.config['MAIL_SERVER'] = 'smtp.yandex.ru'
@@ -23,22 +24,12 @@ app.config['MAIL_USERNAME'] = 'pizzaparadise.staff@yandex.ru'
 app.config['MAIL_PASSWORD'] = 'wwigfvvgjboxmfvt'
 mail = Mail(app)
 MENU = [
-    {"name": "Маргарита", "price": 350, "weight": "300г", "image": r'static\images\pizza\М.jpg'},
-    {"name": "Пепперони", "price": 450, "weight": "400г", "image": r'static\images\pizza\П.jpg'},
-    {"name": "4 сыра", "price": 500, "weight": "450г", "image": r'static\images\pizza\4.jpg'},
+    {"name": "Маргарита", "price": 350, "weight": "300г", "image": 'static/images/pizza/М.jpg'},
+    {"name": "Пепперони", "price": 450, "weight": "400г", "image": 'static/images/pizza/П.jpg'},
+    {"name": "4 сыра", "price": 500, "weight": "450г", "image": 'static/images/pizza/F.jpg'},
 ]
 
-total_price = 0
-cart_items = []
-promo_in_rub = 0
-new_total_price = 0
-card_num = None
-CVV = None
-expiry_date = None
-paypal_mail = None
-
 PROMO = {"зимняя сказка": 99}
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,18 +38,19 @@ class User(db.Model):
 
     first_name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
-    avatar = db.Column(db.String(100), nullable=True)  # Имя файла аватара
+    avatar = db.Column(db.String(100), nullable=True)
+    confirmation_code = db.Column(db.String(100), nullable=True)
 
     reviews = db.relationship('Review', backref='user', lazy=True)
     cart_items = db.relationship('CartItem', backref='user', lazy=True)
 
-
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Разрешаем значение NULL
     author = db.Column(db.String(100), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False)
+
 
 
 class CartItem(db.Model):
@@ -67,32 +59,40 @@ class CartItem(db.Model):
     pizza_name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
 
-
 def get_login_reg_buttons(user_id):
     username = None
     if user_id:
         username = get_email(user_id)
     return render_template('login_reg_buttons.html', user_id=user_id, username=username)
 
-
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_user_id():
     return session.get('user_id')
-
 
 def get_email(user_id):
     user = User.query.get(user_id)
     return user.username
 
-
 def get_fullname(user_id):
     user = User.query.get(user_id)
     return user.first_name, user.last_name
 
+def generate_confirmation_code():
+    return ''.join(random.choices(string.digits, k=4))
+
+def send_confirmation_code_email(user):
+    confirmation_code = generate_confirmation_code()
+    user.confirmation_code = confirmation_code
+    db.session.commit()
+
+    subject = "Код подтверждения удаления аккаунта"
+    body = f"Ваш код подтверждения для удаления аккаунта: {confirmation_code}"
+    msg = Message(subject, sender='pizzaparadise.staff@yandex.ru', recipients=[user.username])
+    msg.body = body
+    mail.send(msg)
 
 @app.route('/')
 @app.route('/index')
@@ -104,8 +104,6 @@ def index():
         first_name, last_name = get_fullname(user_id)
     return render_template('index.html', user_id=user_id, username=username,
                            first_name=first_name, last_name=last_name)
-
-
 @app.route('/menu')
 def menu():
     user_id = get_user_id()
@@ -131,23 +129,24 @@ def about():
 
 @app.route('/reviews')
 def reviews():
-    reviews_data = Review.query.join(User).add_columns(Review.id, User.username, Review.author, Review.rating,
-                                                       Review.comment).all()
+    reviews_data = db.session.query(Review.id, Review.author, Review.rating, Review.comment, User.username).outerjoin(User, User.id == Review.user_id).order_by(Review.id.desc()).all()
     user_id = get_user_id()
+    print(reviews_data)
     username = first_name = last_name = None
     if user_id:
         username = get_email(user_id)
         first_name, last_name = get_fullname(user_id)
-    print(username)
     review_exists = Review.query.filter_by(user_id=user_id).first() is not None if user_id is not None else False
     return render_template('reviews.html', reviews_data=reviews_data,
                            user_id=user_id, username=username, review_exists=review_exists,
-                           none=None, first_name=first_name, last_name=last_name)
+                           first_name=first_name, last_name=last_name)
 
 
-@app.route('/add_review', methods=['POST'])
+@app.route('/add_review', methods=['POST', 'GET'])
 def add_review():
     user_id = get_user_id()
+    if request.method != 'POST':
+        abort(500)
     if user_id is None:
         return redirect(url_for('reviews'))
     author = (request.form.get("author")).lstrip('Имя пользователя: ')
@@ -161,8 +160,6 @@ def add_review():
 
 @app.route('/cart')
 def cart():
-    global total_price
-    global cart_items
     user_id = get_user_id()
     username = first_name = last_name = None
     if user_id:
@@ -178,8 +175,11 @@ def cart():
     for item in cart_data:
         pizza = next((p for p in MENU if p["name"] == item.pizza_name), None)
         if pizza:
-            cart_items.append({"name": pizza["name"], "price": pizza["price"], "quantity": item.quantity})
+            cart_items.append(
+                {"name": pizza["name"], "price": pizza["price"], "quantity": item.quantity, 'photo': pizza['image']})
             total_price += pizza["price"] * item.quantity
+    session['total_price'] = total_price
+    session['cart_items'] = cart_items
     return render_template('cart.html', user_id=user_id, username=username, cart_items=cart_items,
                            total_price=total_price, first_name=first_name, last_name=last_name)
 
@@ -199,21 +199,17 @@ def get_info():
         return None
 
 
-@app.route('/process_payment', methods=['POST'])
+@app.route('/process_payment', methods=['POST', 'GET'])
 def process_payment():
-    global total_price
-    global CVV
-    global card_num
-    global expiry_date
     user_id = get_user_id()
+    if request.method != 'POST':
+        abort(500)
     username = first_name = last_name = None
     if user_id:
         username = get_email(user_id)
         first_name, last_name = get_fullname(user_id)
     if user_id is None:
-        error_message = 'Ошибка: Для просмотра статуса необходимо выполнить вход.'
-        return render_template('cart.html', user_id=user_id, username=username, error_message=error_message,
-                               none=None, first_name=first_name, last_name=last_name)
+        abort(401)
     if request.method == 'POST':
         data = get_info()
         if data:
@@ -267,39 +263,32 @@ def process_payment():
 
 @app.route('/payment_success', methods=['GET', 'POST'])
 def payment_success():
-    global new_total_price
-    global total_price
     user_id = get_user_id()
     username = first_name = last_name = None
     if user_id:
         username = get_email(user_id)
         first_name, last_name = get_fullname(user_id)
-    user = User.query.get(user_id)
-    if new_total_price:
-        price = new_total_price
-    else:
-        price = total_price
-    if not session['payment_confirmation_sent']:
-        send_payment_confirmation_email(user.username, price)
-        session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
-    return render_template('payment_success.html', user_id=user_id, username=username,
-                           total_price=price, first_name=first_name, last_name=last_name)
+        user = User.query.get(user_id)
+        if not session['payment_confirmation_sent']:
+            send_payment_confirmation_email(user.username, session.get('new_total_price', session.get('total_price')))
+            session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
+        session['promo_in_rub'] = 0
+        return render_template('payment_success.html', user_id=user_id, username=username,
+                               total_price=session.get('new_total_price', session.get('total_price')),
+                               first_name=first_name, last_name=last_name)
+    if user_id is None:
+        abort(401)
 
 
-@app.route('/apply_promo_code', methods=['POST'])
+@app.route('/apply_promo_code', methods=['POST', 'GET'])
 def apply_promo_code():
     user_id = get_user_id()
     username = first_name = last_name = None
+    if request.method != 'POST':
+        abort(500)
     if user_id:
         username = get_email(user_id)
         first_name, last_name = get_fullname(user_id)
-    global CVV
-    global card_num
-    global expiry_date
-    global total_price
-    global promo_in_rub
-    global paypal_mail
-    global new_total_price
     error_message = None
     success_message = None
     data = get_info()
@@ -307,16 +296,26 @@ def apply_promo_code():
     if data:
         if 'paypal' in data:
             paypal_mail = data[0]
+            card_num = None
+            CVV = None
+            expiry_date = None
         else:
-            card_num, CVV, expiry_date = data
+            paypal_mail = None
+            card_num = data[0]
+            CVV = data[1]
+            expiry_date = data[2]
     else:
         paypal_mail = None
-    new_total_price = total_price
+        card_num = None
+        CVV = None
+        expiry_date = None
+    new_total_price = session.get('total_price', 0)
+    promo_in_rub = 0
     promo_code = request.form.get('promo_code')
     try:
         if PROMO[promo_code.lower()]:
             new_discount = int(PROMO[promo_code])
-            promo_in_rub = round(total_price * (new_discount / 100), 2)
+            promo_in_rub = round(new_total_price * (new_discount / 100), 2)
             success_message = f'Промокод на скидку {new_discount}% успешно активирован'
     except KeyError:
         error_message = 'Введен некорректный промокод'
@@ -324,8 +323,15 @@ def apply_promo_code():
         new_discount = 0
 
     new_total_price -= promo_in_rub
+    session['CVV'] = CVV
+    session['card_num'] = card_num
+    session['expiry_date'] = expiry_date
+    session['promo_in_rub'] = promo_in_rub
+    session['paypal_mail'] = paypal_mail
+    session['new_total_price'] = new_total_price
     return render_template('testpayment.html', discount=new_discount, total_price=new_total_price,
-                           promo_in_rub=promo_in_rub, cart_items=[cart_items], user_id=user_id, username=username,
+                           promo_in_rub=promo_in_rub, cart_items=session.get('cart_items'), user_id=user_id,
+                           username=username,
                            CVV=CVV, first_name=first_name, last_name=last_name,
                            expiry_date=expiry_date, card_num=card_num, paypal_mail=paypal_mail,
                            error_message=error_message, success_message=success_message)
@@ -345,8 +351,10 @@ def send_payment_confirmation_email(recipient_email, price):
     for item in cart_data:
         pizza = next((p for p in MENU if p["name"] == item.pizza_name), None)
         if pizza:
+            print(pizza)
             quantity = pizza_quantities.get(item.pizza_name, 0)
             for i in range(quantity):
+                print(pizza['image'])
                 with app.open_resource(pizza["image"]) as fp:
                     filename = f"{pizza['name']}_{i}.jpg"  # Уникальное имя файла для каждого изображения
                     msg.attach(filename, "image/jpg", fp.read())
@@ -357,9 +365,6 @@ def send_payment_confirmation_email(recipient_email, price):
 
 @app.route('/payment', methods=['GET', 'POST'])
 def payment():
-    global total_price
-    global cart_items
-    global promo_in_rub
     user_id = get_user_id()
     username = first_name = last_name = None
     if user_id:
@@ -367,23 +372,24 @@ def payment():
         first_name, last_name = get_fullname(user_id)
     discount = 0
     if user_id is None:
-        error_message = 'Ошибка: Для оплаты необходимо выполнить вход.'
-        return render_template('testpayment.html', user_id=user_id, username=username, error_message=error_message,
-                               none=None, first_name=first_name, last_name=last_name)
+        abort(401)
 
     if request.method == 'POST':
-        return render_template('testpayment.html', user_id=user_id, username=username, total_price=total_price,
-                               cart_items=[cart_items], first_name=first_name, last_name=last_name,
-                               discount=discount, promo_in_rub=promo_in_rub)
+        return render_template('testpayment.html', user_id=user_id, username=username,
+                               total_price=session.get('total_price', 0),
+                               cart_items=session.get('cart_items'), first_name=first_name, last_name=last_name,
+                               discount=discount, promo_in_rub=session.get('promo_in_rub', 0))
 
-    return render_template('testpayment.html', total_price=total_price, username=username,
+    return render_template('testpayment.html', total_price=session.get('total_price', 0), username=username,
                            user_id=user_id, first_name=first_name, last_name=last_name)
 
 
-@app.route('/add_to_cart', methods=['POST'])
+@app.route('/add_to_cart', methods=['POST', 'GET'])
 def add_to_cart():
     user_id = get_user_id()
     username = first_name = last_name = None
+    if request.method != 'POST':
+        abort(500)
     if user_id:
         username = get_email(user_id)
         first_name, last_name = get_fullname(user_id)
@@ -449,21 +455,26 @@ def logout():
     return redirect(url_for('index'))
 
 
+
+
+
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     user_id = get_user_id()
     username = get_email(user_id)
-    first_name, last_name = get_fullname(user_id)
-    user = User.query.get(user_id)  # Получаем объект пользователя из базы данных
-    print(user.avatar)
-    if not user.avatar or not os.listdir('static/images/avatars'):
-        user.avatar = '../default_avatar.jpg'
-    if request.method == 'POST':
-        return redirect(url_for('profile'))
+    if user_id:
+        first_name, last_name = get_fullname(user_id)
+        user = User.query.get(user_id)  # Получаем объект пользователя из базы данных
+        if not user.avatar or not os.listdir('static/images/avatars'):
+            user.avatar = '../default_avatar.jpg'
+        if request.method == 'POST':
+            return redirect(url_for('profile'))
 
-    return render_template('profile.html', user_id=user_id, username=username,
-                           user=user, first_name=first_name,
-                           last_name=last_name)  # Передаем объект пользователя в шаблон
+        return render_template('profile.html', user_id=user_id, username=username,
+                               user=user, first_name=first_name,
+                               last_name=last_name)  # Передаем объект пользователя в шаблон
+    if user_id is None:
+        abort(401)
 
 
 def delete_old_avatar(folder_path):
@@ -476,9 +487,11 @@ def delete_old_avatar(folder_path):
         os.remove(os.path.join(folder_path, files[0]))
 
 
-@app.route('/update_profile', methods=['POST'])
+@app.route('/update_profile', methods=['POST', 'GET'])
 def update_profile():
     user_id = get_user_id()
+    if request.method != 'POST':
+        abort(500)
     if user_id:
         user = User.query.get(user_id)
         if user:
@@ -537,6 +550,61 @@ def unauthorized(error):
                     'Для данного действия',
                     'необходимо войти в аккаунт.']
     return render_template('error.html', error_type=401, error_message=message_list), 401
+
+
+@app.route('/send_confirmation_code')
+def send_confirmation_code():
+    user_id = get_user_id()
+    if user_id is None:
+        abort(401)
+    username = first_name = last_name = None
+    if user_id:
+        username = get_email(user_id)
+        first_name, last_name = get_fullname(user_id)
+    user = User.query.get(user_id)
+    send_confirmation_code_email(user)
+    return render_template('delete_account.html',user_id=user_id, username=username,
+                           first_name=first_name, last_name=last_name)
+
+@app.route('/confirm_delete_account', methods=['POST', 'GET'])
+def confirm_delete_account():
+    if request.method != 'POST':
+        abort(500)
+    user_id = get_user_id()
+    if user_id is None:
+        abort(401)
+
+    user = User.query.get(user_id)
+    confirmation_code = request.form.get('confirmation_code')
+
+    if user.confirmation_code == confirmation_code:
+        # Создаем специального пользователя для удаленных аккаунтов, если его еще нет
+        deleted_user_id = db.session.query(User).filter_by(username='deleted_user').scalar()
+        if not deleted_user_id:
+            deleted_user_id = create_deleted_user()
+
+        # Обновляем все отзывы пользователя
+        reviews = Review.query.filter_by(user_id=user_id).all()
+        for review in reviews:
+            review.author = "УДАЛЕННЫЙ АККАУНТ"
+            review.user_id = deleted_user_id  # Присваиваем user_id специального пользователя
+
+        db.session.delete(user)
+        db.session.commit()
+        session.pop('user_id', None)
+        return redirect(url_for('index'))
+    else:
+        error_message = 'Неверный код подтверждения.'
+        return render_template('delete_account.html', error_message=error_message)
+
+
+
+def create_deleted_user():
+    deleted_user = User(username='deleted_user', password='deleted_user')
+    db.session.add(deleted_user)
+    db.session.commit()
+    return deleted_user.id
+
 
 
 if __name__ == '__main__':

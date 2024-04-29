@@ -164,7 +164,8 @@
             <div class="card">
 
                 <div class="d-flex justify-content-between p-3">
-                    {% for item in cart_items.0 %}
+
+                    {% for item in cart_items %}
 
                     <div class="d-flex flex-column mb-3">
                         <span>{{ item.name }} - {{ item.quantity }}</span>
