@@ -10,7 +10,6 @@
 {% for pizza in MENU %}
 <div class="pizza-item">
     <h3>{{ pizza.name }}</h3>
-    <!-- Add the image tag here with the pizza image URL -->
     <img src="{{ pizza.image }}" alt="{{ pizza.name }}" width="200" height="150">
     <p>{{ pizza.weight }} - {{ pizza.price }} руб.</p>
     <form action="{{ url_for('add_to_cart') }}" method="post">

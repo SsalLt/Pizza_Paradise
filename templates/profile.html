@@ -9,9 +9,9 @@
 <header>
     <div class="ava">
         {% if user.avatar %}
-        <img src="{{ url_for('static', filename='images/avatars/' + user.avatar) }}" alt="Аватар">
+        <img src="{{ url_for('static', filename='images/avatars/' + user.avatar) }}" alt="Аватар не загружен">
         {% else %}
-        <img src="{{ url_for('static', filename='images/default_avatar.jpg') }}" alt="Аватар">
+        <img src="{{ url_for('static', filename='images/default_avatar.jpg') }}" alt="Аватар не загружен">
         {% endif %}
     </div>
     <h1 class="username">{{ username }}</h1>
@@ -30,7 +30,7 @@
             <p><button type="submit" class="btn btn-primary btn-update">Обновить профиль</button>
         </form>
         <a href="{{ url_for('logout') }}" class="btn btn-primary btn-update">Выйти из аккаунта</a>
-        <a href="{{ url_for('send_confirmation_code') }}" class="btn btn-primary btn-update">Удалить аккаунт</a>
+        <a href="{{ url_for('send_confirmation_code') }}" class="btn btn-primary btn-delete">Удалить аккаунт</a>
     </div>
 
 </main>

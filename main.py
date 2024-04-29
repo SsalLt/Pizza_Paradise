@@ -31,6 +31,7 @@ MENU = [
 
 PROMO = {"зимняя сказка": 99}
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -44,13 +45,13 @@ class User(db.Model):
     reviews = db.relationship('Review', backref='user', lazy=True)
     cart_items = db.relationship('CartItem', backref='user', lazy=True)
 
+
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Разрешаем значение NULL
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     author = db.Column(db.String(100), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False)
-
 
 
 class CartItem(db.Model):
@@ -59,29 +60,36 @@ class CartItem(db.Model):
     pizza_name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
 
+
 def get_login_reg_buttons(user_id):
     username = None
     if user_id:
         username = get_email(user_id)
     return render_template('login_reg_buttons.html', user_id=user_id, username=username)
 
+
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def get_user_id():
     return session.get('user_id')
+
 
 def get_email(user_id):
     user = User.query.get(user_id)
     return user.username
 
+
 def get_fullname(user_id):
     user = User.query.get(user_id)
     return user.first_name, user.last_name
 
+
 def generate_confirmation_code():
     return ''.join(random.choices(string.digits, k=4))
+
 
 def send_confirmation_code_email(user):
     confirmation_code = generate_confirmation_code()
@@ -94,6 +102,7 @@ def send_confirmation_code_email(user):
     msg.body = body
     mail.send(msg)
 
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -104,6 +113,8 @@ def index():
         first_name, last_name = get_fullname(user_id)
     return render_template('index.html', user_id=user_id, username=username,
                            first_name=first_name, last_name=last_name)
+
+
 @app.route('/menu')
 def menu():
     user_id = get_user_id()
@@ -129,9 +140,9 @@ def about():
 
 @app.route('/reviews')
 def reviews():
-    reviews_data = db.session.query(Review.id, Review.author, Review.rating, Review.comment, User.username).outerjoin(User, User.id == Review.user_id).order_by(Review.id.desc()).all()
+    reviews_data = db.session.query(Review.id, Review.author, Review.rating, Review.comment, User.username).outerjoin(
+        User, User.id == Review.user_id).order_by(Review.id.desc()).all()
     user_id = get_user_id()
-    print(reviews_data)
     username = first_name = last_name = None
     if user_id:
         username = get_email(user_id)
@@ -185,7 +196,6 @@ def cart():
 
 
 def get_info():
-    print(request.form)
     paypal_email = request.form.get("paypal")
     card_number = request.form.get("card_number")
     cvc = request.form.get("cvc")
@@ -226,7 +236,7 @@ def process_payment():
                                            none=None, first_name=first_name, last_name=last_name)
                 if ' ' in card_number:
                     card_number: str = card_number.replace(' ', '')
-                    # print(card_number, type(card_number))
+
                 if len(card_number) != 16 or not card_number.isdigit():
                     error_message = 'Ошибка: Неверный номер карты.'
                     return render_template('payment_failure.html', user_id=user_id, username=username,
@@ -271,7 +281,7 @@ def payment_success():
         user = User.query.get(user_id)
         if not session['payment_confirmation_sent']:
             send_payment_confirmation_email(user.username, session.get('new_total_price', session.get('total_price')))
-            session['payment_confirmation_sent'] = True  # Устанавливаем флаг в сессии
+            session['payment_confirmation_sent'] = True
         session['promo_in_rub'] = 0
         return render_template('payment_success.html', user_id=user_id, username=username,
                                total_price=session.get('new_total_price', session.get('total_price')),
@@ -351,12 +361,10 @@ def send_payment_confirmation_email(recipient_email, price):
     for item in cart_data:
         pizza = next((p for p in MENU if p["name"] == item.pizza_name), None)
         if pizza:
-            print(pizza)
             quantity = pizza_quantities.get(item.pizza_name, 0)
             for i in range(quantity):
-                print(pizza['image'])
                 with app.open_resource(pizza["image"]) as fp:
-                    filename = f"{pizza['name']}_{i}.jpg"  # Уникальное имя файла для каждого изображения
+                    filename = f"{pizza['name']}_{i}.jpg"
                     msg.attach(filename, "image/jpg", fp.read())
     CartItem.query.filter_by(user_id=user_id).delete()
     db.session.commit()
@@ -444,7 +452,7 @@ def register():
             new_user = User(username=username, password=password)
             db.session.add(new_user)
             db.session.commit()
-            session['user_id'] = new_user.id  # Устанавливаем user_id в сессии
+            session['user_id'] = new_user.id
             return redirect(url_for('login'))
     return render_template('register.html', error_message=error_message)
 
@@ -455,16 +463,13 @@ def logout():
     return redirect(url_for('index'))
 
 
-
-
-
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     user_id = get_user_id()
     username = get_email(user_id)
     if user_id:
         first_name, last_name = get_fullname(user_id)
-        user = User.query.get(user_id)  # Получаем объект пользователя из базы данных
+        user = User.query.get(user_id)
         if not user.avatar or not os.listdir('static/images/avatars'):
             user.avatar = '../default_avatar.jpg'
         if request.method == 'POST':
@@ -472,17 +477,14 @@ def profile():
 
         return render_template('profile.html', user_id=user_id, username=username,
                                user=user, first_name=first_name,
-                               last_name=last_name)  # Передаем объект пользователя в шаблон
+                               last_name=last_name)
     if user_id is None:
         abort(401)
 
 
 def delete_old_avatar(folder_path):
-    # Получаем список файлов в папке
     files = os.listdir(folder_path)
-    # Сортируем файлы по времени последнего доступа (по возрастанию)
     files.sort(key=lambda x: os.path.getatime(os.path.join(folder_path, x)))
-    # Удаляем самый старый файл
     if files:
         os.remove(os.path.join(folder_path, files[0]))
 
@@ -503,19 +505,16 @@ def update_profile():
             else:
                 user.first_name = full_name.strip()
                 user.last_name = ''
-                # Обработка загруженного файла аватара
             if 'avatar' in request.files:
                 avatar_file = request.files['avatar']
                 if avatar_file and allowed_file(avatar_file.filename):
                     filename = secure_filename(avatar_file.filename)
-                    # Удаляем самый старый аватар
                     delete_old_avatar(app.config['UPLOAD_FOLDER'])
-                    # Сохраняем новый аватар
                     avatar_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    user.avatar = filename  # Сохраняем имя файла в базе данных
+                    user.avatar = filename
 
                 else:
-                    user.avatar = '../default_avatar.jpg'  # Сохраняем имя файла в базе данных
+                    user.avatar = '../default_avatar.jpg'
         db.session.commit()
     return redirect(url_for('profile'))
 
@@ -563,8 +562,9 @@ def send_confirmation_code():
         first_name, last_name = get_fullname(user_id)
     user = User.query.get(user_id)
     send_confirmation_code_email(user)
-    return render_template('delete_account.html',user_id=user_id, username=username,
+    return render_template('delete_account.html', user_id=user_id, username=username,
                            first_name=first_name, last_name=last_name)
+
 
 @app.route('/confirm_delete_account', methods=['POST', 'GET'])
 def confirm_delete_account():
@@ -578,16 +578,14 @@ def confirm_delete_account():
     confirmation_code = request.form.get('confirmation_code')
 
     if user.confirmation_code == confirmation_code:
-        # Создаем специального пользователя для удаленных аккаунтов, если его еще нет
         deleted_user_id = db.session.query(User).filter_by(username='deleted_user').scalar()
         if not deleted_user_id:
             deleted_user_id = create_deleted_user()
 
-        # Обновляем все отзывы пользователя
         reviews = Review.query.filter_by(user_id=user_id).all()
         for review in reviews:
             review.author = "УДАЛЕННЫЙ АККАУНТ"
-            review.user_id = deleted_user_id  # Присваиваем user_id специального пользователя
+            review.user_id = deleted_user_id
 
         db.session.delete(user)
         db.session.commit()
@@ -598,7 +596,6 @@ def confirm_delete_account():
         return render_template('delete_account.html', error_message=error_message)
 
 
-
 def create_deleted_user():
     deleted_user = User(username='deleted_user', password='deleted_user')
     db.session.add(deleted_user)
@@ -606,8 +603,7 @@ def create_deleted_user():
     return deleted_user.id
 
 
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(port=8080, host='127.0.0.1', debug=False)
