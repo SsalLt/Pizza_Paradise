@@ -14,7 +14,7 @@
                 {% set image_filename = 'static/images/pizza/' + item.name|first|lower + '.jpg' %}
                 <!-- Проверка наличия изображения -->
                 {% if image_filename %}
-                    <img src="{{ image_filename }}" alt="{{ item.name }}" width="200" height="150">
+                    <img src="{{ image_filename }}" alt="{{ image_filename }}" width="200" height="150">
                 {% else %}
                     <p>Изображение не найдено</p>
                 {% endif %}
