@@ -435,3 +435,8 @@ body {
 .deleted-account {
     color: red;
 }
+
+.text-success {
+    text-decoration: none; /* Remove underline */
+    color: black; /* Inherit color from the parent element */
+}
